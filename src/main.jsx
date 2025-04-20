@@ -6,6 +6,9 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Home from "./pages/Home/Home";
 import Root from "./pages/root/Root";
+import Profile from "./pages/utils/profile";
+import Settings from "./pages/utils/settings";
+import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
 const router = createBrowserRouter([
   {
@@ -14,7 +17,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Home></Home>,
+        element: <PrivateRoute><Home></Home></PrivateRoute>,
       },
       {
         path: "/login",
@@ -24,6 +27,14 @@ const router = createBrowserRouter([
         path: "/register",
         element: <Register></Register>,
       },
+      {
+        path: "/profile",
+        element: <Profile></Profile> //protected korte hobe
+      },
+      {
+        path: "/settings",
+        element: <PrivateRoute><Settings></Settings></PrivateRoute> //protected korte hobe
+      }
     ],
   },
 ]);
