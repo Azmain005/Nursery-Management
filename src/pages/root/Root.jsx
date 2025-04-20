@@ -3,7 +3,7 @@ import Footer from "../../components/footer/Footer";
 import Navbar from "../../components/navbar/Navbar";
 const Root = () => {
     return (
-        <div className="max-w-screen-2xl mx-auto">
+        <div className="max-w-screen-2xl mx-auto bg-[#fefaef]">
            <Navbar></Navbar>
            <Outlet></Outlet>
            <Footer></Footer>
