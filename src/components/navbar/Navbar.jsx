@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { AuthContext } from "../../providers/AuthProvider";
 const Navbar = () => {
-  const { user, signOutUser} = useContext(AuthContext);
+  const { user, signOutUser } = useContext(AuthContext);
   const handleSignout = () => {
     signOutUser()
       .then(() => {
@@ -62,9 +62,12 @@ const Navbar = () => {
                   <span className="text-lg font-bold">0 Items</span>
                   <span className="text-info text-white">Subtotal: 0</span>
                   <div className="card-actions">
-                    <button className="btn btn-primary bg-[#02542d] border-none shadow-none btn-block">
+                    <NavLink
+                      to="/cart"
+                      className="btn btn-primary bg-[#02542d] border-none shadow-none btn-block"
+                    >
                       View cart
-                    </button>
+                    </NavLink>
                   </div>
                 </div>
               </div>
@@ -78,8 +81,9 @@ const Navbar = () => {
                 <div className="w-10 rounded-full">
                   <img
                     alt="Tailwind CSS Navbar component"
-                    src={user?.
-                      photoURL || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                    src={
+                      user?.photoURL ||
+                      "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
                     }
                   />
                 </div>
@@ -88,7 +92,11 @@ const Navbar = () => {
                 tabIndex={0}
                 className="menu menu-sm dropdown-content bg-[#9bab9a] rounded-box z-1 mt-3 w-52 p-2 shadow"
               >
-                <p className="text-sm text-center text-emerald-900">Welcome,<br /> {user.email}</p>
+                <p className="text-sm text-center text-emerald-900">
+                  Welcome,
+                  <br /> {user.email}
+                </p>
+                <div className="divider my-0"></div>
                 <li>
                   <NavLink
                     to="/profile"
@@ -100,6 +108,7 @@ const Navbar = () => {
                     </div>
                   </NavLink>
                 </li>
+                <div className="divider my-0"></div>
                 <li>
                   <NavLink
                     to="settings"
@@ -111,8 +120,12 @@ const Navbar = () => {
                     </div>
                   </NavLink>
                 </li>
+                <div className="divider my-0"></div>
                 <li>
-                  <button onClick={handleSignout} className="btn bg-red-400 text-sm hover:bg-red-500 border-none shadow-none mt-2">
+                  <button
+                    onClick={handleSignout}
+                    className="btn bg-red-400 text-sm hover:bg-red-500 border-none shadow-none mt-2"
+                  >
                     Logout
                   </button>
                 </li>

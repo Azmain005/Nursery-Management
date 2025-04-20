@@ -18,7 +18,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <PrivateRoute><Home></Home></PrivateRoute>,
+        element: (
+          <PrivateRoute>
+            <Home></Home>
+          </PrivateRoute>
+        ),
       },
       {
         path: "/login",
@@ -30,16 +34,28 @@ const router = createBrowserRouter([
       },
       {
         path: "/profile",
-        element: <PrivateRoute><Profile></Profile></PrivateRoute> //protected korte hobe
+        element: (
+          <PrivateRoute>
+            <Profile></Profile>
+          </PrivateRoute>
+        ), //protected korte hobe
       },
       {
         path: "/settings",
-        element: <PrivateRoute><Settings></Settings></PrivateRoute> //protected korte hobe
+        element: (
+          <PrivateRoute>
+            <Settings></Settings>
+          </PrivateRoute>
+        ), //protected korte hobe
       },
       {
-        path: '/cart',
-        element: <PrivateRoute><Cart></Cart></PrivateRoute>
-      }
+        path: "/cart",
+        element: (
+          <PrivateRoute>
+            <Cart></Cart>
+          </PrivateRoute>
+        ),
+      },
     ],
   },
 ]);
