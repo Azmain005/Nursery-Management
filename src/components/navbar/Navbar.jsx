@@ -78,7 +78,9 @@ const Navbar = () => {
                 <div className="w-10 rounded-full">
                   <img
                     alt="Tailwind CSS Navbar component"
-                    src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                    src={user?.
+                      photoURL || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                    }
                   />
                 </div>
               </div>
@@ -86,6 +88,7 @@ const Navbar = () => {
                 tabIndex={0}
                 className="menu menu-sm dropdown-content bg-[#9bab9a] rounded-box z-1 mt-3 w-52 p-2 shadow"
               >
+                <p className="text-sm text-center text-emerald-900">Welcome,<br /> {user.email}</p>
                 <li>
                   <NavLink
                     to="/profile"

@@ -1,8 +1,12 @@
 import { useContext, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import leaf from "../../assets/leaf.png";
 import { AuthContext } from "../../providers/AuthProvider";
 
+
 const Login = () => {
+    const navigate = useNavigate();
+
   const { signInUser, signInWithGoogle, signOutUser, loading } = useContext(AuthContext);
   const [error, setError] = useState('')
   const [googleerror, googlesetError] = useState('')
@@ -14,6 +18,7 @@ const Login = () => {
         .then((result) => {
             const user = result.user;
             console.log('succesfully logged in');
+            navigate("/");
         })
         .catch((error) => {
             setError(error);
@@ -25,6 +30,8 @@ const Login = () => {
     .then((result) => {
         const user = result.user;
         console.log(user);
+        navigate("/");
+
     })
     .catch((error) => {
         console.log(error)
@@ -40,13 +47,12 @@ const Login = () => {
             </h2>
             <p class="mt-2 text-base text-gray-600">
               Don’t have an account?{" "}
-              <a
-                href="#"
-                title=""
+              <NavLink
+                to='/register'
                 class="font-medium text-[#3a5a40] transition-all duration-200 hover:text-[#02542d] hover:underline focus:[#02542d]"
               >
                 Create a free account
-              </a>
+              </NavLink>
             </p>
 
             <form onSubmit={handleLogin} class="mt-8">

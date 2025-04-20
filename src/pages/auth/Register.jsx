@@ -1,8 +1,11 @@
 import { useContext, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import leaf from "../../assets/leaf.png";
 import { AuthContext } from "../../providers/AuthProvider";
+
 const Register = () => {
+  const navigate = useNavigate();
+
     const {user, loading, createUser, signInWithGoogle} = useContext(AuthContext);
     const [error, setError] = useState(null)
     const handleCreateUser = (e) => {
@@ -15,6 +18,7 @@ const Register = () => {
         .then((result) => {
             const user = result.user;
             console.log(user);
+            navigate("/");
         })
         .catch((error) => {
             setError(error);
@@ -28,12 +32,14 @@ const Register = () => {
       .then((result) => {
           const user = result.user;
           console.log(user);
+          navigate("/");
+
       })
       .catch((error) => {
           console.log(error)
       })
     }
-    
+
     return (
         <section class="bg-[#fefaef]">
               <div class="grid grid-cols-1 lg:grid-cols-2">
@@ -44,13 +50,13 @@ const Register = () => {
                     </h2>
                     <p class="mt-2 text-base text-gray-600">
                       Already have an account?{" "}
-                      <a
-                        href="#"
-                        title=""
+                      <NavLink
+                      to='/login'
+                        
                         class="font-medium text-[#3a5a40] transition-all duration-200 hover:text-[#02542d] hover:underline focus:[#02542d]"
                       >
                         Login
-                      </a>
+                      </NavLink>
                     </p>
         
                     <form  onSubmit={handleCreateUser} class="mt-8">

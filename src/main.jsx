@@ -6,6 +6,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Home from "./pages/Home/Home";
 import Root from "./pages/root/Root";
+import Cart from "./pages/utils/Cart";
 import Profile from "./pages/utils/profile";
 import Settings from "./pages/utils/settings";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
@@ -29,11 +30,15 @@ const router = createBrowserRouter([
       },
       {
         path: "/profile",
-        element: <Profile></Profile> //protected korte hobe
+        element: <PrivateRoute><Profile></Profile></PrivateRoute> //protected korte hobe
       },
       {
         path: "/settings",
         element: <PrivateRoute><Settings></Settings></PrivateRoute> //protected korte hobe
+      },
+      {
+        path: '/cart',
+        element: <PrivateRoute><Cart></Cart></PrivateRoute>
       }
     ],
   },
