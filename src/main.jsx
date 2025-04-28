@@ -5,6 +5,11 @@ import "./index.css";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Home from "./pages/Home/Home";
+import Inventory from "./pages/Home/nursery-comps/Inventory";
+import Maintenance from "./pages/Home/nursery-comps/Maintenance";
+import MarketPlace from "./pages/Home/nursery-comps/MarketPlace";
+import Monitoring from "./pages/Home/nursery-comps/Monitoring";
+import RawMaterial from "./pages/Home/nursery-comps/RawMaterial";
 import Supplier from "./pages/Home/Supplier";
 import Vendor from "./pages/Home/Vendor";
 import Worker from "./pages/Home/Worker";
@@ -14,48 +19,49 @@ import Profile from "./pages/utils/profile";
 import Settings from "./pages/utils/settings";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
+
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Root></Root>, //will make it private later
+    element: <Root />,
     children: [
       {
         path: "/",
         element: (
           <PrivateRoute>
-            <Home></Home>
+            <Home />
           </PrivateRoute>
         ),
       },
       {
         path: "/login",
-        element: <Login></Login>,
+        element: <Login />,
       },
       {
         path: "/register",
-        element: <Register></Register>,
+        element: <Register />,
       },
       {
         path: "/profile",
         element: (
           <PrivateRoute>
-            <Profile></Profile>
+            <Profile />
           </PrivateRoute>
-        ), //protected korte hobe
+        ),
       },
       {
         path: "/settings",
         element: (
           <PrivateRoute>
-            <Settings></Settings>
+            <Settings />
           </PrivateRoute>
-        ), //protected korte hobe
+        ),
       },
       {
         path: "/cart",
         element: (
           <PrivateRoute>
-            <Cart></Cart>
+            <Cart />
           </PrivateRoute>
         ),
       },
@@ -63,26 +69,56 @@ const router = createBrowserRouter([
         path: "/supplier",
         element: (
           <PrivateRoute>
-            <Supplier></Supplier>
+            <Supplier />
           </PrivateRoute>
-        )
-      }, 
+        ),
+      },
       {
         path: "/nurseryWorker",
         element: (
           <PrivateRoute>
-            <Worker></Worker>
+            <Worker />
           </PrivateRoute>
-        )
-      }, 
+        ),
+        children: [
+          {
+            path: "", // default child (for /nurseryWorker)
+            element: <Inventory />,
+          },
+          {
+            path: "/nurseryWorker/monitoring", // nested under /nurseryWorker
+            element: (
+                <Monitoring />
+            ),
+          },
+          {
+            path: "/nurseryWorker/maintenance", // nested under /nurseryWorker
+            element: (
+                <Maintenance />
+            ),
+          }, 
+          {
+            path: "/nurseryWorker/marketPlace", // nested under /nurseryWorker
+            element: (
+                <MarketPlace />
+            ),
+          },
+          {
+            path: "/nurseryWorker/rawMaterial", // nested under /nurseryWorker
+            element: (
+                <RawMaterial />
+            ),
+          }
+        ],
+      },
       {
-        path: "vendor",
+        path: "/vendor",
         element: (
           <PrivateRoute>
-            <Vendor></Vendor>
+            <Vendor />
           </PrivateRoute>
-        )
-      }
+        ),
+      },
     ],
   },
 ]);

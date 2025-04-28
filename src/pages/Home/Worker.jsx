@@ -1,9 +1,12 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom';
+import Aside from './nursery-comps/Aside';
 
 const Worker = () => {
     return (
-        <div className='min-h-screen text-5xl'>
-            Worker page
+        <div className='flex gap-10 p-10'>
+            <Aside></Aside>
+            <Outlet></Outlet>
         </div>
     );
 };

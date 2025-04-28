@@ -1,0 +1,9 @@
+/* Common link style */
+.sidebar-link {
+  @apply block py-4 px-4 text-[#2c5c2c] text-left text-sm font-semibold cursor-pointer;
+}
+
+/* Active link style */
+.sidebar-link-active {
+  @apply bg-[#607b64] text-white;
+}
