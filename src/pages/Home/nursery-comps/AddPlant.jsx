@@ -155,6 +155,7 @@ const AddPlant = () => {
                     categories: categories,
                     original_plant_id: selectedPlant.id,
                     image: selectedPlant.default_image.medium_url,
+                    sci_name: selectedPlant.scientific_name,
                   });
 
                   alert("🌱 Plant added successfully!");
