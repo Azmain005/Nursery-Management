@@ -1,7 +1,7 @@
-import { collection, getDocs } from "firebase/firestore"; // import Firestore functions
+import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { IoIosSearch } from "react-icons/io";
-import { db } from "../../../Auth/firebase.init"; // <-- your Firebase config
+import { db } from "../../../Auth/firebase.init";
 import PlantCardDesc from "./PlantCardDesc";
 
 const Inventory = () => {
@@ -22,13 +22,14 @@ const Inventory = () => {
     const fetchPlants = async () => {
       setIsLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, "plants")); // your Firestore collection
+        const querySnapshot = await getDocs(collection(db, "plants"));
         const plantsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
         setPlants(plantsData);
         setFilteredPlants(plantsData);
+        console.log("Fetched plants:", plantsData); // Debugging
       } catch (error) {
         console.error("Error fetching plants from Firebase:", error);
       }
@@ -42,9 +43,10 @@ const Inventory = () => {
     if (searchTerm.trim() === "") {
       setFilteredPlants(plants);
     } else {
-      const filtered = plants.filter((plant) =>
-        plant.common_name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const filtered = plants.filter((plant) => {
+        const name = plant.name || plant.scientific_name || ""; // SAFE fallback
+        return name.toLowerCase().includes(searchTerm.toLowerCase());
+      });
       setFilteredPlants(filtered);
       setCurrentPage(1);
     }
@@ -101,14 +103,13 @@ const Inventory = () => {
       ) : (
         <>
           {/* Plants */}
-          {/* <div>{plants.length}</div> */}
           <div className="mt-5">
             {currentPlants.length > 0 ? (
               currentPlants.map((plant) => (
                 <PlantCardDesc
                   key={plant.id}
                   plant={plant}
-                  onClick={() => setSelectedPlant(plant)} // open modal when clicked
+                  onClick={() => setSelectedPlant(plant)}
                 />
               ))
             ) : (
@@ -160,15 +161,15 @@ const Inventory = () => {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg w-[90%] md:w-[500px]">
             <h2 className="text-2xl font-bold mb-4">
-              {selectedPlant.common_name}
+              {selectedPlant.common_name || selectedPlant.scientific_name}
             </h2>
             <p>
-              <strong>Scientific Name:</strong> {selectedPlant.scientific_name}
+              <strong>Scientific Name:</strong>{" "}
+              {selectedPlant.scientific_name || "Unknown"}
             </p>
             <p>
-              <strong>Family:</strong> {selectedPlant.family}
+              <strong>Family:</strong> {selectedPlant.family || "Unknown"}
             </p>
-            {/* Add more fields from your DB if needed */}
 
             <div className="flex justify-end mt-6">
               <button
