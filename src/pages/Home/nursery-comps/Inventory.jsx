@@ -236,28 +236,28 @@ const Inventory = () => {
                 </p>
 
                 {/* <div className="flex items-center gap-2 mb-4">
-            <p className="text-md"><strong>Automatically add to inventory:</strong></p>
-            <input type="checkbox" checked readOnly className="w-5 h-5" />
-          </div> */}
+          <p className="text-md"><strong>Automatically add to inventory:</strong></p>
+          <input type="checkbox" checked readOnly className="w-5 h-5" />
+        </div> */}
 
                 {/* Add to Inventory Button */}
                 {/* <button className="bg-[#607b64] hover:bg-[#4a6450] text-white font-semibold w-full py-3 rounded-lg text-lg transition">
-            Add to Inventory
-          </button> */}
+          Add to Inventory
+        </button> */}
               </div>
             </div>
 
             {/* Tags */}
             {/* <div className="flex flex-wrap gap-2 mt-6 justify-center md:justify-start">
-        {["Seed", "Germination", "Seeding", "Vegetative", "Flowering", "Pollinization", "Fruit", "Dispersal", "Senescence"].map((stage) => (
-          <span
-            key={stage}
-            className="bg-[#e3e6d8] text-[#2c5c2c] px-3 py-1 rounded-full text-sm font-medium"
-          >
-            {stage}
-          </span>
-        ))}
-      </div> */}
+      {["Seed", "Germination", "Seeding", "Vegetative", "Flowering", "Pollinization", "Fruit", "Dispersal", "Senescence"].map((stage) => (
+        <span
+          key={stage}
+          className="bg-[#e3e6d8] text-[#2c5c2c] px-3 py-1 rounded-full text-sm font-medium"
+        >
+          {stage}
+        </span>
+      ))}
+    </div> */}
           </div>
         </div>
       )}

@@ -12,7 +12,7 @@ const Login = () => {
   const [googleerror, googlesetError] = useState("");
   const handleLogin = (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     const email = e.target.email.value;
     const password = e.target.password.value;
     signInUser(email, password)
@@ -26,7 +26,7 @@ const Login = () => {
       });
   };
   const handleSigninwithGoogle = () => {
-    setError('');
+    setError("");
     console.log("button clicked");
     signInWithGoogle()
       .then((result) => {
