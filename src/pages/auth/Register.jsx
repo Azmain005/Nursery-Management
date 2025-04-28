@@ -1,6 +1,8 @@
+import { doc, setDoc } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import leaf from "../../assets/leaf.png";
+import { db } from "../../Auth/firebase.init";
 import { AuthContext } from "../../providers/AuthProvider";
 
 const Register = () => {
@@ -8,33 +10,45 @@ const Register = () => {
 
   const { user, loading, createUser, signInWithGoogle } =
     useContext(AuthContext);
-  const [error, setError] = useState(null);
-  const handleCreateUser = (e) => {
+  const [error, setError] = useState('');
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     const name = e.target.name.value;
     const email = e.target.email.value;
     const password = e.target.password.value;
     console.log(email, password);
+    setError('');
     createUser(email, password)
       .then((result) => {
         const user = result.user;
         console.log(user);
+        // Firebase post data
+        setDoc(doc(db, "user_data", user.uid), {
+          email: user.email,
+          role: "Vendor",
+        });
         navigate("/");
       })
       .catch((error) => {
-        setError(error);
+        setError(error.message);
         console.log(error);
       });
   };
   const handleSigninwithGoogle = () => {
     console.log("button clicked");
+    setError('');
     signInWithGoogle()
       .then((result) => {
         const user = result.user;
         console.log(user);
+        setDoc(doc(db, "user_data", user.uid), {
+          email: user.email,
+          role: "Vendor",
+        });
         navigate("/");
       })
       .catch((error) => {
+        setError(error.message);
         console.log(error);
       });
   };
@@ -104,6 +118,11 @@ const Register = () => {
                     />
                   </div>
                 </div>
+                {error && (
+                  <div role="alert" className="alert alert-error">
+                    <span className="text-sm font-semi-bold">{error}</span>
+                  </div>
+                )}
 
                 <div>
                   <button

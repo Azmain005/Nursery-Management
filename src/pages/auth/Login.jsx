@@ -12,6 +12,7 @@ const Login = () => {
   const [googleerror, googlesetError] = useState("");
   const handleLogin = (e) => {
     e.preventDefault();
+    setError('');
     const email = e.target.email.value;
     const password = e.target.password.value;
     signInUser(email, password)
@@ -21,10 +22,11 @@ const Login = () => {
         navigate("/");
       })
       .catch((error) => {
-        setError(error);
+        setError(error.message);
       });
   };
   const handleSigninwithGoogle = () => {
+    setError('');
     console.log("button clicked");
     signInWithGoogle()
       .then((result) => {
@@ -33,7 +35,7 @@ const Login = () => {
         navigate("/");
       })
       .catch((error) => {
-        console.log(error);
+        setError(error.message);
       });
   };
   return (
@@ -87,7 +89,7 @@ const Login = () => {
                       Forgot password?{" "}
                     </a>
                   </div>
-                  <div class="mt-2.5">
+                  <div class="mt-2.5 mb-2.5">
                     <input
                       type="password"
                       name="password"
@@ -95,6 +97,11 @@ const Login = () => {
                       class="block w-full p-4 text-black placeholder-gray-500 transition-all duration-200 border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:border-[#02542d] focus:bg-white caret-[#02542d]"
                     />
                   </div>
+                  {error && (
+                    <div role="alert" className="alert alert-error">
+                      <span className="text-sm font-semi-bold">{error}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div>

@@ -5,6 +5,9 @@ import "./index.css";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Home from "./pages/Home/Home";
+import Supplier from "./pages/Home/Supplier";
+import Vendor from "./pages/Home/Vendor";
+import Worker from "./pages/Home/Worker";
 import Root from "./pages/root/Root";
 import Cart from "./pages/utils/Cart";
 import Profile from "./pages/utils/profile";
@@ -56,6 +59,30 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+      {
+        path: "/supplier",
+        element: (
+          <PrivateRoute>
+            <Supplier></Supplier>
+          </PrivateRoute>
+        )
+      }, 
+      {
+        path: "/nurseryWorker",
+        element: (
+          <PrivateRoute>
+            <Worker></Worker>
+          </PrivateRoute>
+        )
+      }, 
+      {
+        path: "vendor",
+        element: (
+          <PrivateRoute>
+            <Vendor></Vendor>
+          </PrivateRoute>
+        )
+      }
     ],
   },
 ]);
