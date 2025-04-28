@@ -1,9 +1,5 @@
 const Maintenance = () => {
-    return (
-        <div>
-            Maintenance
-        </div>
-    );
+  return <div className="flex-1">Maintenance</div>;
 };
 
 export default Maintenance;

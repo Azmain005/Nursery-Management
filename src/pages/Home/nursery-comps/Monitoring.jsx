@@ -1,9 +1,5 @@
 const Monitoring = () => {
-    return (
-        <div className="">
-            Monitoring
-        </div>
-    );
+  return <div className="flex-1">Monitoring</div>;
 };
 
 export default Monitoring;

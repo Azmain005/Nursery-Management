@@ -5,6 +5,7 @@ import "./index.css";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Home from "./pages/Home/Home";
+import AddPlant from "./pages/Home/nursery-comps/AddPlant";
 import Inventory from "./pages/Home/nursery-comps/Inventory";
 import Maintenance from "./pages/Home/nursery-comps/Maintenance";
 import MarketPlace from "./pages/Home/nursery-comps/MarketPlace";
@@ -87,28 +88,24 @@ const router = createBrowserRouter([
           },
           {
             path: "/nurseryWorker/monitoring", // nested under /nurseryWorker
-            element: (
-                <Monitoring />
-            ),
+            element: <Monitoring />,
           },
           {
             path: "/nurseryWorker/maintenance", // nested under /nurseryWorker
-            element: (
-                <Maintenance />
-            ),
-          }, 
+            element: <Maintenance />,
+          },
           {
             path: "/nurseryWorker/marketPlace", // nested under /nurseryWorker
-            element: (
-                <MarketPlace />
-            ),
+            element: <MarketPlace />,
           },
           {
             path: "/nurseryWorker/rawMaterial", // nested under /nurseryWorker
-            element: (
-                <RawMaterial />
-            ),
-          }
+            element: <RawMaterial />,
+          },
+          {
+            path: "/nurseryWorker/addPlant", // nested under /nurseryWorker
+            element: <AddPlant />,
+          },
         ],
       },
       {

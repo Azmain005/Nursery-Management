@@ -1,9 +1,5 @@
 const MarketPlace = () => {
-    return (
-        <div>
-            Market Place
-        </div>
-    );
+  return <div className="flex-1">Market Place</div>;
 };
 
 export default MarketPlace;

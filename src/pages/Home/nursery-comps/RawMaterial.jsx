@@ -1,9 +1,5 @@
 const RawMaterial = () => {
-    return (
-        <div>
-            Raw Materials
-        </div>
-    );
+  return <div className="flex-1">Raw Materials</div>;
 };
 
 export default RawMaterial;
