@@ -158,13 +158,13 @@ const AddPlant = () => {
                     sci_name: selectedPlant.scientific_name,
                   });
 
-                  alert("🌱 Plant added successfully!");
+                  // alert("🌱 Plant added successfully!");
 
                   form.reset();
                   document.getElementById("add_plant_modal").close();
                 } catch (error) {
                   console.error("Error adding plant:", error);
-                  alert("❌ Failed to add plant.");
+                  // alert("❌ Failed to add plant.");
                 } finally {
                   setIsLoading(false); // hide loader
                 }
