@@ -50,7 +50,7 @@ const Login = () => {
               Don’t have an account?{" "}
               <NavLink
                 to="/register"
-                classname="font-medium text-[#3a5a40] transition-all duration-200 hover:text-[#02542d] hover:underline focus:[#02542d]"
+                className="font-medium text-[#3a5a40] transition-all duration-200 hover:text-[#02542d] hover:underline focus:[#02542d]"
               >
                 Create a free account
               </NavLink>
