@@ -21,7 +21,7 @@ const Inventory = () => {
     const fetchPlants = async () => {
       setIsLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, "plants"));
+        const querySnapshot = await getDocs(collection(db, "inventory"));
         const plantsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),

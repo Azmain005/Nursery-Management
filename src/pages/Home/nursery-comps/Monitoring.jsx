@@ -1,5 +1,7 @@
-const Monitoring = () => {
-  return <div className="flex-1">Monitoring</div>;
-};
-
-export default Monitoring;
+export default function Monitoring() {
+  return (
+    <div>
+      jshdj
+    </div>
+  )
+}
