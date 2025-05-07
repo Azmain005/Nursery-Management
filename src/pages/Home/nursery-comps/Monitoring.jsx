@@ -1,4 +1,11 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { IoIosArrowForward, IoIosSearch } from "react-icons/io";
 import { db } from "../../../Auth/firebase.init";
@@ -14,7 +21,11 @@ const Monitoring = () => {
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [addingToInventory, setAddingToInventory] = useState(false);
-  const [inventoryMessage, setInventoryMessage] = useState({ show: false, text: "", type: "" });
+  const [inventoryMessage, setInventoryMessage] = useState({
+    show: false,
+    text: "",
+    type: "",
+  });
 
   const handleSearchClick = () => {
     setShowInput(!showInput);
@@ -55,7 +66,10 @@ const Monitoring = () => {
 
   const indexOfLastPlant = currentPage * plantsPerPage;
   const indexOfFirstPlant = indexOfLastPlant - plantsPerPage;
-  const currentPlants = filteredPlants.slice(indexOfFirstPlant, indexOfLastPlant);
+  const currentPlants = filteredPlants.slice(
+    indexOfFirstPlant,
+    indexOfLastPlant
+  );
 
   const totalPages = Math.ceil(filteredPlants.length / plantsPerPage);
 
@@ -94,43 +108,45 @@ const Monitoring = () => {
 
   const handleAddToInventory = async () => {
     if (!selectedPlant) return;
-    
+
     setAddingToInventory(true);
     try {
       // Prepare the data to be added to inventory
       const inventoryData = {
         plant_id: selectedPlant.id,
         name: selectedPlant.name || "Unknown",
-        sci_name: selectedPlant.sci_name || selectedPlant.scientific_name || "Unknown",
+        sci_name:
+          selectedPlant.sci_name || selectedPlant.scientific_name || "Unknown",
         stage: selectedPlant.stage || "N/A",
         planting_date: selectedPlant.planting_date || "Unknown",
         harvest_date: selectedPlant.harvest_date || "Unknown",
         stock: selectedPlant.stock,
         price: selectedPlant.price,
         image: selectedPlant.image || "https://via.placeholder.com/150",
-        added_to_inventory_date: new Date().toISOString().split('T')[0],
+        added_to_inventory_date: new Date().toISOString().split("T")[0],
         categories: selectedPlant.categories,
-
       };
 
       // Add to inventory collection
       await addDoc(collection(db, "inventory"), inventoryData);
-      
+
       // Delete from plants collection
       await deleteDoc(doc(db, "plants", selectedPlant.id));
-      
+
       // Update local state to remove the plant
-      const updatedPlants = plants.filter(plant => plant.id !== selectedPlant.id);
+      const updatedPlants = plants.filter(
+        (plant) => plant.id !== selectedPlant.id
+      );
       setPlants(updatedPlants);
       setFilteredPlants(updatedPlants);
-      
+
       // Show success message
       setInventoryMessage({
         show: true,
         text: "Successfully added to inventory and removed from plants!",
-        type: "success"
+        type: "success",
       });
-      
+
       // Close modal after a short delay
       setTimeout(() => {
         handleCloseModal();
@@ -139,13 +155,12 @@ const Monitoring = () => {
           fetchPlants();
         }, 500);
       }, 1500);
-      
     } catch (error) {
       console.error("Error managing inventory:", error);
       setInventoryMessage({
         show: true,
         text: "Failed to process. Please try again.",
-        type: "error"
+        type: "error",
       });
     } finally {
       setAddingToInventory(false);
@@ -186,9 +201,15 @@ const Monitoring = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-[#faf6e9]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm text-[#607b64] uppercase tracking-wider font-bold">Title</th>
-                  <th className="px-6 py-3 text-left text-sm text-[#607b64] uppercase tracking-wider font-bold">Stage</th>
-                  <th className="px-6 py-3 text-left text-sm text-[#607b64] uppercase tracking-wider font-bold">Harvest</th>
+                  <th className="px-6 py-3 text-left text-sm text-[#607b64] uppercase tracking-wider font-bold">
+                    Title
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm text-[#607b64] uppercase tracking-wider font-bold">
+                    Stage
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm text-[#607b64] uppercase tracking-wider font-bold">
+                    Harvest
+                  </th>
                   <th></th>
                 </tr>
               </thead>
@@ -216,7 +237,10 @@ const Monitoring = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                    <td
+                      colSpan="4"
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
                       No plants found.
                     </td>
                   </tr>
@@ -302,19 +326,21 @@ const Monitoring = () => {
                 </p>
 
                 {inventoryMessage.show && (
-                  <div className={`p-3 rounded-lg mb-3 text-center font-medium ${
-                    inventoryMessage.type === "success" 
-                      ? "bg-green-100 text-green-800" 
-                      : "bg-red-100 text-red-800"
-                  }`}>
+                  <div
+                    className={`p-3 rounded-lg mb-3 text-center font-medium ${
+                      inventoryMessage.type === "success"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
                     {inventoryMessage.text}
                   </div>
                 )}
 
-                <button 
+                <button
                   className={`${
-                    addingToInventory 
-                      ? "bg-gray-400 cursor-not-allowed" 
+                    addingToInventory
+                      ? "bg-gray-400 cursor-not-allowed"
                       : "bg-[#607b64] hover:bg-[#4a6450]"
                   } text-white font-semibold w-full py-3 rounded-lg text-lg transition flex justify-center items-center`}
                   onClick={handleAddToInventory}
@@ -322,9 +348,25 @@ const Monitoring = () => {
                 >
                   {addingToInventory ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Processing...
                     </>
@@ -350,7 +392,12 @@ const Monitoring = () => {
               ].map((stage) => (
                 <button
                   key={stage}
-                  onClick={() => handleStageChange(selectedPlant.id, stage)}
+                  onClick={() => {
+                    handleStageChange(selectedPlant.id, stage);
+                    if (stage === "Senescence") {
+                      handleAddToInventory(selectedPlant.id);
+                    }
+                  }}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                     selectedPlant.stage === stage
                       ? "bg-[#2c5c2c] text-white"
