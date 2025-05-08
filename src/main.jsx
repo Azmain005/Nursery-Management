@@ -73,6 +73,16 @@ const router = createBrowserRouter([
             <Supplier />
           </PrivateRoute>
         ),
+        children: [
+          {
+            path: "/supplier/pending-orders",
+            element: <div>Pending Orders Page</div>,
+          },
+          {
+            path: "/supplier/add-material",
+            element: <div>Add Material Page</div>,
+          },
+        ],
       },
       {
         path: "/nurseryWorker",
