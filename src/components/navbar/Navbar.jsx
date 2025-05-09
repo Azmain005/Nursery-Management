@@ -7,6 +7,10 @@ import { useCart } from "../../providers/CartProvider";
 
 const Navbar = () => {
   const { user, signOutUser, getRoleFromDatabase } = useContext(AuthContext);
+  const { cartItems } = useCart(); // ← get live cart
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
   const { cartItems } = useCart();  // ← get live cart
   const [userData, setUserData] = useState(null);
   
@@ -25,6 +29,7 @@ const Navbar = () => {
     // };
 
     // fetchUserData();
+
     getRoleFromDatabase(user)
       .then((user) => {
         setUserData(user);
@@ -33,9 +38,12 @@ const Navbar = () => {
         console.error("Error fetching user data:", error);
       });
   }, [user]);
+
+  console.log(userData);
+
   
   console.log(userData);
-  
+
   const handleSignout = () => {
     signOutUser()
       .then(() => {
@@ -47,7 +55,7 @@ const Navbar = () => {
         console.error("Sign out error", error);
       });
   };
-  
+
   // Check if user is a supplier
   const isSupplier = userData === "Supplier";
   console.log("userrrrrrrrrrrrrrrrrrrrr", user);
@@ -103,12 +111,27 @@ const Navbar = () => {
                     </span>
                     <span className="text-info text-white">
                       Subtotal: ৳
+
+                      {cartItems.reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0
+                      )}
+
                       {cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+
                     </span>
 
                     <div className="card-actions">
                       <NavLink
+
+                        to={
+                          userData === "NurseryWorker"
+                            ? "/nurserycart"
+                            : "/cart"
+                        }
+
                         to="/cart"
+
                         className="btn btn-primary bg-[#02542d] border-none shadow-none btn-block"
                       >
                         View cart
