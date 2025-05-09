@@ -51,16 +51,21 @@ const Maintenance = () => {
   const handleAddToCart = async (material) => {
     setIsLoading(true);
     try {
-      const userDoc = await getDocs(
+      // Fetch the logged-in user's email from AuthContext
+      const userEmail = user.email;
+
+      // Query the user_data collection to find the document ID for this email
+      const userQuery = await getDocs(
         collection(db, "user_data"),
-        where("uid", "==", user.uid)
+        where("email", "==", userEmail)
       );
-      const userId = userDoc.docs[0]?.id;
+      const userId = userQuery.docs[1]?.id;
 
       if (!userId) {
         throw new Error("User not found in user_data collection");
       }
 
+      // Add the material to the nursery_cart collection with the user's document ID
       await addDoc(collection(db, "nursery_cart"), {
         userId: userId,
         materialId: material.id,
