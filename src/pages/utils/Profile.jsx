@@ -6,7 +6,7 @@ import { db } from "../../Auth/firebase.init";
 import { FaUser } from "react-icons/fa";
 
 // Import profile components
-import { ProfileHeader, PasswordUpdateForm } from "./profiles/CommonComponents";
+import { ProfileHeader } from "./profiles/CommonComponents";
 import VendorProfile from "./profiles/VendorProfile";
 import AdminProfile from "./profiles/AdminProfile";
 import NurseryWorkerProfile from "./profiles/NurseryWorkerProfile";
@@ -231,13 +231,6 @@ const Profile = () => {
 
                     <div className="px-6 py-5">
                         {renderRoleSpecificProfile()}
-                        <PasswordUpdateForm
-                            handleUpdatePassword={handleUpdatePassword}
-                            newPassword={newPassword}
-                            setNewPassword={setNewPassword}
-                            confirmPassword={confirmPassword}
-                            setConfirmPassword={setConfirmPassword}
-                        />
                     </div>
                 </div>
             </div>

@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
 import { FaUser, FaLeaf, FaShoppingCart, FaExclamationTriangle, FaTimes } from "react-icons/fa";
 import { ProfileHeader } from "./CommonComponents";
+import { AuthContext } from "../../../providers/AuthProvider";
 
 const NurseryWorkerProfile = ({ user, userData, handleUpdateProfile, displayName, setDisplayName, handleUpdatePassword, newPassword, setNewPassword, confirmPassword, setConfirmPassword }) => {
+    const { getPlantsFromInventory } = useContext(AuthContext);
     const [stats, setStats] = useState({
         totalPlants: 0,
         lowStock: 0,
@@ -13,31 +15,39 @@ const NurseryWorkerProfile = ({ user, userData, handleUpdateProfile, displayName
 
     useEffect(() => {
         const fetchStats = async () => {
-            const plantsRef = collection(db, "plants");
-            const plantsSnapshot = await getDocs(plantsRef);
-            
-            const stats = {
-                totalPlants: 0,
-                lowStock: 0,
-                outOfStock: 0
-            };
-            
-            plantsSnapshot.forEach(doc => {
-                const plant = doc.data();
-                stats.totalPlants++;
-                if (plant.stock < 5) {
-                    stats.lowStock++;
-                }
-                if (plant.stock === 0) {
-                    stats.outOfStock++;
-                }
-            });
-            
-            setStats(stats);
+            try {
+                const querySnapshot = await getPlantsFromInventory();
+                const inventoryPlants = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                console.log("Inventory plants:", inventoryPlants);
+                
+                const stats = {
+                    totalPlants: inventoryPlants.length,
+                    lowStock: 0,
+                    outOfStock: 0
+                };
+                
+                inventoryPlants.forEach(plant => {
+                    if (plant.stock < 5) {
+                        stats.lowStock++;
+                    }
+                    if (plant.stock === 0) {
+                        stats.outOfStock++;
+                    }
+                });
+                
+                console.log("Final stats:", stats);
+                setStats(stats);
+            } catch (error) {
+                console.error("Error fetching plant stats:", error);
+            }
         };
         
         fetchStats();
-    }, []);
+    }, [getPlantsFromInventory]);
 
     return (
         <div className="space-y-6 bg-[#FEFDF4] min-h-screen w-full">
@@ -60,7 +70,7 @@ const NurseryWorkerProfile = ({ user, userData, handleUpdateProfile, displayName
                     <div className="flex items-center">
                         <FaLeaf className="h-8 w-8 text-[#3a5a40]" />
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Total Plants</p>
+                            <p className="text-sm font-medium text-gray-600">Total Plants in Inventory</p>
                             <p className="text-2xl font-semibold text-[#02542d]">{stats.totalPlants}</p>
                         </div>
                     </div>
