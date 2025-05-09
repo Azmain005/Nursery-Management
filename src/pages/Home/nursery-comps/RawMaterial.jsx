@@ -2,6 +2,7 @@ import { addDoc, collection, getDocs, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../../Auth/firebase.init";
 import LoaderPlant from "../../../components/Loader/LoaderPlant";
+import { IoIosSearch } from "react-icons/io";
 
 const RawMaterial = () => {
   const [rawMaterials, setRawMaterials] = useState([]);
@@ -9,6 +10,7 @@ const RawMaterial = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSearchInput, setShowSearchInput] = useState(false);
   const materialsPerPage = 6;
 
   useEffect(() => {
@@ -42,6 +44,14 @@ const RawMaterial = () => {
     setCurrentPage(1); // Reset to the first page after search
   };
 
+  const handleSearchClick = () => {
+    setShowSearchInput(!showSearchInput);
+    if (showSearchInput) {
+      setSearchTerm("");
+      setFilteredMaterials(rawMaterials);
+    }
+  };
+
   const indexOfLastMaterial = currentPage * materialsPerPage;
   const indexOfFirstMaterial = indexOfLastMaterial - materialsPerPage;
   const currentMaterials = filteredMaterials.slice(
@@ -60,14 +70,25 @@ const RawMaterial = () => {
   return (
     <div className="flex-1">
       {/* Search Bar */}
-      <div className="mb-5">
-        <input
-          type="text"
-          placeholder="Search raw materials..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="w-full px-4 py-2 border rounded-lg outline-none bg-[#faf6e9] text-[#2c5c2c]"
-        />
+      <div className="flex gap-3 mb-5">
+        <div className="flex gap-3 flex-1 border justify-between items-center h-[55px] bg-[#faf6e9] rounded-xl text-[#2c5c2c] px-4">
+          <p className="text-xl font-semibold">Raw Materials</p>
+          <div className="flex items-center gap-2">
+            {showSearchInput && (
+              <input
+                type="text"
+                className="outline-none rounded-lg h-[40px] p-3 bg-[#faf6e9] border border-gray-300 transition-all w-60"
+                placeholder="Search raw materials..."
+                value={searchTerm}
+                onChange={handleSearch}
+              />
+            )}
+            <IoIosSearch
+              className="text-3xl font-bold cursor-pointer"
+              onClick={handleSearchClick}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Loader */}
