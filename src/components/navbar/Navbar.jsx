@@ -50,7 +50,7 @@ const Navbar = () => {
   
   // Check if user is a supplier
   const isSupplier = userData === "Supplier";
-  
+  console.log("userrrrrrrrrrrrrrrrrrrrr", user);
   return (
     <div>
       <div className="navbar bg-[#faf6e9] border-b-2 border-[#3e5931]">
@@ -140,7 +140,7 @@ const Navbar = () => {
               >
                 <p className="text-sm text-center text-emerald-900">
                   Welcome,
-                  <br /> {user.name}
+                  <br /> {user.displayName}
                 </p>
                 <div className="divider my-0"></div>
                 <li>
