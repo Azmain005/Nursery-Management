@@ -24,6 +24,10 @@ import AuthProvider from "./providers/AuthProvider";
 import { CartProvider } from "./providers/CartProvider";
 
 
+
+
+
+
 const router = createBrowserRouter([
   {
     path: "/",
