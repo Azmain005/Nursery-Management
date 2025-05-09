@@ -24,15 +24,36 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch order history
-                const ordersRef = collection(db, "orders");
-                const ordersSnapshot = await getDocs(ordersRef);
+                // Fetch order history from cart
+                const cartRef = collection(db, "cart");
+                const cartSnapshot = await getDocs(cartRef);
                 const orders = [];
-                ordersSnapshot.forEach(doc => {
-                    if (doc.data().userId === user.uid) {
-                        orders.push({ id: doc.id, ...doc.data() });
+                
+                // Fetch all user data for names
+                const userDataRef = collection(db, "user_data");
+                const userDataSnapshot = await getDocs(userDataRef);
+                const userDataMap = {};
+                userDataSnapshot.forEach(doc => {
+                    userDataMap[doc.id] = doc.data();
+                });
+
+                cartSnapshot.forEach(doc => {
+                    const cartData = doc.data();
+                    if (cartData.userId === user.uid) {
+                        const buyerData = userDataMap[cartData.userId];
+                        const totalAmount = (cartData.price || 0) * (cartData.quantity || 0);
+
+                        orders.push({ 
+                            id: doc.id, 
+                            ...cartData,
+                            date: cartData.timestamp?.toDate() || new Date(),
+                            buyerName: buyerData?.displayName || 'Unknown User',
+                            totalAmount
+                        });
                     }
                 });
+                // Sort orders by date, most recent first
+                orders.sort((a, b) => b.date - a.date);
                 setOrderHistory(orders);
 
                 // Fetch address if it exists
@@ -182,19 +203,16 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                     <div className="space-y-4">
                         {orderHistory.map(order => (
                             <div key={order.id} className="border-b border-[#C8C0C0] pb-4 last:border-b-0">
-                                <p className="font-medium text-[#02542d]">Order #{order.id}</p>
-                                <p className="text-sm text-gray-600">Date: {new Date(order.date).toLocaleDateString()}</p>
-                                <p className="text-sm text-gray-600">Status: {order.status}</p>
-                                {order.items && (
-                                    <div className="mt-2">
-                                        <p className="text-sm font-medium text-gray-600">Items:</p>
-                                        <ul className="list-disc list-inside text-sm text-gray-600">
-                                            {order.items.map((item, index) => (
-                                                <li key={index}>{item.name} - Quantity: {item.quantity}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
+                                <div className="space-y-2">
+                                    <p className="font-medium text-[#02542d]">Order #{order.id}</p>
+                                    <p className="text-sm text-gray-600">Date: {order.date.toLocaleDateString()}</p>
+                                    <p className="text-sm text-gray-600">Status: {order.status || 'Pending'}</p>
+                                    <p className="text-sm text-gray-600">Buyer: {order.buyerName}</p>
+                                    <p className="text-sm text-gray-600">Name: {order.name}</p>
+                                    <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
+                                    <p className="text-sm text-gray-600">Price: ${order.totalAmount.toFixed(2)}</p>
+                                    <p className="text-sm font-medium text-gray-600">Total Amount: ${order.totalAmount.toFixed(2)}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
