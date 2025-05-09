@@ -16,10 +16,13 @@ import Vendor from "./pages/Home/Vendor";
 import Worker from "./pages/Home/Worker";
 import Root from "./pages/root/Root";
 import Cart from "./pages/utils/Cart";
+import Checkout from "./pages/utils/Checkout";
 import Profile from "./pages/utils/profile";
 import Settings from "./pages/utils/settings";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
+import { CartProvider } from "./providers/CartProvider";
+
 
 const router = createBrowserRouter([
   {
@@ -63,6 +66,14 @@ const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <Cart />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/checkout",
+        element: (
+          <PrivateRoute>
+            <Checkout />
           </PrivateRoute>
         ),
       },
@@ -123,7 +134,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <CartProvider>            
+        <RouterProvider router={router} />
+      </CartProvider>
     </AuthProvider>
   </StrictMode>
 );
