@@ -37,13 +37,13 @@ const Navbar = () => {
   // Check if user is a supplier
   const isSupplier = userData === "Supplier";
   console.log("userrrrrrrrrrrrrrrrrrrrr", user);
-  
+
   // Calculate cart total once
   const cartTotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  
+
   return (
     <div>
       <div className="navbar bg-[#faf6e9] border-b-2 border-[#3e5931]">

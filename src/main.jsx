@@ -24,8 +24,8 @@ import AuthProvider from "./providers/AuthProvider";
 
 import AddMaterial from "./pages/Home/supplier-comps/AddMaterial";
 
-import { CartProvider } from "./providers/CartProvider";
 import NurseryCart from "./pages/Home/nursery-comps/NurseryCart";
+import { CartProvider } from "./providers/CartProvider";
 
 
 
@@ -126,7 +126,7 @@ const router = createBrowserRouter([
             element: <Monitoring />,
           },
           {
-            path: "/nurseryWorker/maintenance", // nested under /nurseryWorker
+            path: "/nurseryWorker/order-raw-material", // nested under /nurseryWorker
             element: <Maintenance />,
           },
           {

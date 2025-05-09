@@ -25,12 +25,12 @@ const Aside = () => {
         </NavLink>
 
         <NavLink
-          to="/nurseryWorker/maintenance"
+          to="/nurseryWorker/order-raw-material"
           className={({ isActive }) =>
             `sidebar-link ${isActive ? "sidebar-link-active" : ""}`
           }
         >
-          Maintenance
+          Order Raw Material
         </NavLink>
 
         <NavLink
