@@ -20,6 +20,7 @@ import Profile from "./pages/utils/profile";
 import Settings from "./pages/utils/settings";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
+import AddMaterial from "./pages/Home/supplier-comps/AddMaterial";
 
 const router = createBrowserRouter([
   {
@@ -80,7 +81,7 @@ const router = createBrowserRouter([
           },
           {
             path: "/supplier/add-material",
-            element: <div>Add Material Page</div>,
+            element: <AddMaterial />,
           },
         ],
       },
