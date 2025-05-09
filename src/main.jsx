@@ -21,12 +21,11 @@ import Profile from "./pages/utils/profile";
 import Settings from "./pages/utils/settings";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
-<<<<<<< HEAD
+
 import AddMaterial from "./pages/Home/supplier-comps/AddMaterial";
-=======
 import { CartProvider } from "./providers/CartProvider";
 
->>>>>>> origin
+
 
 const router = createBrowserRouter([
   {
