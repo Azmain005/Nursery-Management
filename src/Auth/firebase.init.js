@@ -12,7 +12,7 @@ const firebaseConfig = {
   projectId: "nursery-management-5a22a",
   storageBucket: "nursery-management-5a22a.firebasestorage.app",
   messagingSenderId: "179174653639",
-  appId: "1:179174653639:web:76cb55498ee06d97edc8e2"
+  appId: "1:179174653639:web:76cb55498ee06d97edc8e2",
 };
 
 // Initialize Firebase

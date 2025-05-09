@@ -1,15 +1,12 @@
 import {
-  addDoc,
-  collection,
-  deleteDoc,
   doc,
-  getDocs,
-  updateDoc,
+  updateDoc
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { IoIosArrowForward, IoIosSearch } from "react-icons/io";
 import { db } from "../../../Auth/firebase.init";
-import Loader from "../../../components/Loader/Loader";
+import { default as Loader } from "../../../components/Loader/Loader";
+import { AuthContext } from "../../../providers/AuthProvider";
 
 const Monitoring = () => {
   const [showInput, setShowInput] = useState(false);
@@ -26,6 +23,8 @@ const Monitoring = () => {
     text: "",
     type: "",
   });
+  const { getPlantsFromDatabase, addToInventory, deleteFromInventory } =
+    useContext(AuthContext);
 
   const handleSearchClick = () => {
     setShowInput(!showInput);
@@ -38,7 +37,8 @@ const Monitoring = () => {
   const fetchPlants = async () => {
     setIsLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, "plants"));
+      // const querySnapshot = await getDocs(collection(db, "plants"));
+      const querySnapshot = await getPlantsFromDatabase();
       const plantsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -128,10 +128,12 @@ const Monitoring = () => {
       };
 
       // Add to inventory collection
-      await addDoc(collection(db, "inventory"), inventoryData);
+      // await addDoc(collection(db, "inventory"), inventoryData);
+      await addToInventory(inventoryData);
 
       // Delete from plants collection
-      await deleteDoc(doc(db, "plants", selectedPlant.id));
+      // await deleteDoc(doc(db, "plants", selectedPlant.id));
+      await deleteFromInventory(selectedPlant.id);
 
       // Update local state to remove the plant
       const updatedPlants = plants.filter(

@@ -1,9 +1,8 @@
-import { addDoc, collection } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { IoIosSearch } from "react-icons/io";
-import { db } from "../../../Auth/firebase.init";
 import LoaderPlant from "../../../components/Loader/LoaderPlant";
 import PlantData from "../../../data/filtered_plant_data.json";
+import { AuthContext } from "../../../providers/AuthProvider";
 import PlantCard from "./PlantCard";
 
 const AddPlant = () => {
@@ -15,7 +14,7 @@ const AddPlant = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // state for loader
-
+  const { addPlantToDatabase } = useContext(AuthContext);
   const handleSearchClick = () => {
     setShowInput(!showInput);
   };
@@ -144,21 +143,34 @@ const AddPlant = () => {
                 const harvest_date = form.harvest_date.value;
                 const price = form.price.value;
                 const categories = form.categories.value;
+                const plantInfo = {
+                  name: name,
+                  stock: number,
+                  planting_date: planting_date,
+                  harvest_date: harvest_date,
+                  price: price,
+                  categories: categories,
+                  original_plant_id: selectedPlant.id,
+                  image: selectedPlant.default_image.medium_url,
+                  sci_name: selectedPlant.scientific_name,
+                  stage: "Seed",
+                };
+                // console.log(plantInfo);
 
                 try {
-                  await addDoc(collection(db, "plants"), {
-                    name: name,
-                    stock: number,
-                    planting_date: planting_date,
-                    harvest_date: harvest_date,
-                    price: price,
-                    categories: categories,
-                    original_plant_id: selectedPlant.id,
-                    image: selectedPlant.default_image.medium_url,
-                    sci_name: selectedPlant.scientific_name,
-                    stage: 'Seed',
-                  });
-
+                  // await addDoc(collection(db, "plants"), {
+                  //   name: name,
+                  //   stock: number,
+                  //   planting_date: planting_date,
+                  //   harvest_date: harvest_date,
+                  //   price: price,
+                  //   categories: categories,
+                  //   original_plant_id: selectedPlant.id,
+                  //   image: selectedPlant.default_image.medium_url,
+                  //   sci_name: selectedPlant.scientific_name,
+                  //   stage: 'Seed',
+                  // });
+                  await addPlantToDatabase(plantInfo);
                   // alert("🌱 Plant added successfully!");
 
                   form.reset();

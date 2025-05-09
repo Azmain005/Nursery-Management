@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { IoIosSearch, IoIosAdd } from "react-icons/io";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+  doc,
+  addDoc,
+} from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
 import LoaderPlant from "../../../components/Loader/LoaderPlant";
 
@@ -65,22 +73,44 @@ const AddMaterial = () => {
 
   const handleAddMaterial = async (e) => {
     e.preventDefault();
+
     const form = e.target;
-    const date = form.date.value;
-    const quantity = form.quantity.value;
+    const quantity = parseInt(form.quantity.value);
 
     try {
-      await addDoc(collection(db, "Material_for_sell"), {
-        name: selectedMaterial.name,
-        price: selectedMaterial.price,
-        date,
-        quantity,
-      });
-      alert("Material added successfully!");
-      setSelectedMaterial(null);
+      setIsLoading(true); // Show loader only in the modal
+
+      const materialCollection = collection(db, "Material_for_sell");
+      const q = query(
+        materialCollection,
+        where("name", "==", selectedMaterial.name)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // Material exists, update the quantity
+        const existingDoc = querySnapshot.docs[0];
+        const existingData = existingDoc.data();
+        const newQuantity = parseInt(existingData.quantity) + quantity;
+
+        await updateDoc(doc(db, "Material_for_sell", existingDoc.id), {
+          quantity: newQuantity,
+        });
+      } else {
+        // Material does not exist, create a new document
+        await addDoc(materialCollection, {
+          name: selectedMaterial.name,
+          price: selectedMaterial.price,
+          image: selectedMaterial.image,
+          quantity,
+        });
+      }
+
+      setSelectedMaterial(null); // Close the modal
     } catch (error) {
-      console.error("Error adding material:", error);
-      alert("Failed to add material.");
+      console.error("Error adding or updating material:", error);
+    } finally {
+      setIsLoading(false); // Hide loader only in the modal
     }
   };
 
@@ -109,7 +139,7 @@ const AddMaterial = () => {
       </div>
 
       {/* Materials */}
-      {isLoading ? (
+      {isLoading && !selectedMaterial ? (
         <LoaderPlant />
       ) : (
         <div className="mt-5">
@@ -134,7 +164,12 @@ const AddMaterial = () => {
                 </div>
                 <button
                   className="btn bg-[#faf6e9] border-none"
-                  onClick={() => setSelectedMaterial(material)}
+                  onClick={() => {
+                    setSelectedMaterial(material);
+                    setTimeout(() => {
+                      document.getElementById("add_material_modal").showModal();
+                    }, 0);
+                  }}
                 >
                   <IoIosAdd className="text-3xl font-bold" />
                 </button>
@@ -197,8 +232,18 @@ const AddMaterial = () => {
               </button>
 
               <h3 className="font-bold text-lg mb-2">
-                {selectedMaterial.name}
+                Add Material Information
               </h3>
+
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Material Name</label>
+                <input
+                  type="text"
+                  value={selectedMaterial.name}
+                  className="input bg-[#faf6e9] outline-none w-full"
+                  readOnly
+                />
+              </div>
 
               <div className="flex flex-col">
                 <label className="font-semibold mb-1">Price</label>
@@ -207,16 +252,6 @@ const AddMaterial = () => {
                   value={`$${selectedMaterial.price}`}
                   className="input bg-[#faf6e9] outline-none w-full"
                   readOnly
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold mb-1">Date</label>
-                <input
-                  type="date"
-                  name="date"
-                  className="input bg-[#faf6e9] w-full"
-                  required
                 />
               </div>
 
@@ -231,12 +266,16 @@ const AddMaterial = () => {
                 />
               </div>
 
-              <button
-                type="submit"
-                className="btn bg-[#02542d] text-white text-lg mt-4 w-full"
-              >
-                Add
-              </button>
+              {isLoading ? (
+                <LoaderPlant />
+              ) : (
+                <button
+                  type="submit"
+                  className="btn bg-[#02542d] text-white text-lg mt-4 w-full"
+                >
+                  Add
+                </button>
+              )}
             </form>
           </div>
         </dialog>

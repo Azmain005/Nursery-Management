@@ -1,8 +1,8 @@
-import { collection, getDocs } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { IoIosArrowForward, IoIosSearch } from "react-icons/io";
-import { db } from "../../../Auth/firebase.init";
 import Loader from "../../../components/Loader/Loader";
+import { AuthContext } from "../../../providers/AuthProvider";
+
 const Inventory = () => {
   const [showInput, setShowInput] = useState(false);
   const [plants, setPlants] = useState([]);
@@ -12,6 +12,14 @@ const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeletingPlant, setIsDeletingPlant] = useState(false);
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "",
+  });
+  const { getPlantsFromInventory, removeFromInventory } =
+    useContext(AuthContext);
 
   const handleSearchClick = () => {
     setShowInput(!showInput);
@@ -21,7 +29,8 @@ const Inventory = () => {
     const fetchPlants = async () => {
       setIsLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, "inventory"));
+        // const querySnapshot = await getDocs(collection(db, "inventory"));
+        const querySnapshot = await getPlantsFromInventory();
         const plantsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -69,6 +78,53 @@ const Inventory = () => {
     setSelectedPlant(null);
   };
 
+  const handleRemove = async () => {
+    if (!selectedPlant || !selectedPlant.id) return;
+
+    try {
+      setIsDeletingPlant(true);
+      // await deleteDoc(doc(db, "inventory", selectedPlant.id));
+      await removeFromInventory(selectedPlant.id);
+
+      // Update local state after successful deletion
+      const updatedPlants = plants.filter(
+        (plant) => plant.id !== selectedPlant.id
+      );
+      setPlants(updatedPlants);
+      setFilteredPlants(updatedPlants);
+
+      // Show notification
+      setNotification({
+        show: true,
+        message: `${
+          selectedPlant.name || "Plant"
+        } has been removed from inventory`,
+        type: "success",
+      });
+
+      // Close modal
+      setSelectedPlant(null);
+
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification({ show: false, message: "", type: "" });
+      }, 3000);
+    } catch (error) {
+      console.error("Error removing plant from inventory:", error);
+      setNotification({
+        show: true,
+        message: "Failed to remove plant. Please try again.",
+        type: "error",
+      });
+
+      setTimeout(() => {
+        setNotification({ show: false, message: "", type: "" });
+      }, 3000);
+    } finally {
+      setIsDeletingPlant(false);
+    }
+  };
+
   return (
     <div className="flex-1">
       {/* Header */}
@@ -92,6 +148,17 @@ const Inventory = () => {
           </div>
         </div>
       </div>
+
+      {/* Notification */}
+      {notification.show && (
+        <div
+          className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            notification.type === "success" ? "bg-green-500" : "bg-red-500"
+          } text-white`}
+        >
+          {notification.message}
+        </div>
+      )}
 
       {/* Loader */}
       {isLoading ? (
@@ -225,8 +292,8 @@ const Inventory = () => {
                   {selectedPlant.planting_date || "Unknown"}
                 </p>
                 <p className="text-md mb-2 text-[#2c5c2c]">
-                  <strong>Expected:</strong>{" "}
-                  {selectedPlant.harvest_date || "Unknown"}
+                  <strong>Category:</strong>{" "}
+                  {selectedPlant.categories || "Unknown"}
                 </p>
                 <p className="text-md mb-2 text-[#2c5c2c]">
                   <strong>In Stock:</strong> {selectedPlant.stock || 0}
@@ -234,30 +301,27 @@ const Inventory = () => {
                 <p className="text-md mb-2 text-[#2c5c2c]">
                   <strong>Price:</strong> {selectedPlant.price || 0}
                 </p>
+                <p className="text-md mb-2 text-[#2c5c2c]">
+                  <strong>Stage:</strong> {selectedPlant.stage || 0}
+                </p>
 
-                {/* <div className="flex items-center gap-2 mb-4">
-          <p className="text-md"><strong>Automatically add to inventory:</strong></p>
-          <input type="checkbox" checked readOnly className="w-5 h-5" />
-        </div> */}
-
-                {/* Add to Inventory Button */}
-                {/* <button className="bg-[#607b64] hover:bg-[#4a6450] text-white font-semibold w-full py-3 rounded-lg text-lg transition">
-          Add to Inventory
-        </button> */}
+                {/* Remove from Inventory Button */}
+                <button
+                  onClick={handleRemove}
+                  disabled={isDeletingPlant}
+                  className="bg-[#607b64] hover:bg-[#4a6450] text-white font-semibold w-full py-3 rounded-lg text-lg transition disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isDeletingPlant ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div>
+                      Removing...
+                    </div>
+                  ) : (
+                    "Remove from Inventory"
+                  )}
+                </button>
               </div>
             </div>
-
-            {/* Tags */}
-            {/* <div className="flex flex-wrap gap-2 mt-6 justify-center md:justify-start">
-      {["Seed", "Germination", "Seeding", "Vegetative", "Flowering", "Pollinization", "Fruit", "Dispersal", "Senescence"].map((stage) => (
-        <span
-          key={stage}
-          className="bg-[#e3e6d8] text-[#2c5c2c] px-3 py-1 rounded-full text-sm font-medium"
-        >
-          {stage}
-        </span>
-      ))}
-    </div> */}
           </div>
         </div>
       )}
