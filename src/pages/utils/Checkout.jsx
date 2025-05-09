@@ -1,8 +1,7 @@
 // src/pages/utils/Checkout.jsx
 import {
   addDoc,
-  collection,
-  serverTimestamp
+  collection
 } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -56,30 +55,32 @@ const Checkout = () => {
       // shape the order exactly as you described
       const orderData = {
         userId: user.uid,
-        createdAt: serverTimestamp(),
-        customer: {
-          firstName: form.firstName,
-          lastName:  form.lastName,
-          address:   form.address,
-          mobile:    form.mobile,
-          email:     form.email,
-          city:      form.city,
-          zone:      form.zone,
-          comment:   form.comment,
-        },
-        paymentMethod:  form.payment,
-        deliveryMethod: form.delivery,
-        voucher:        form.voucher || null,
-        coupon:         form.coupon  || null,
+        // createdAt: serverTimestamp(),
+        // customer: {
+        //   firstName: form.firstName,
+        //   lastName:  form.lastName,
+        //   address:   form.address,
+        //   mobile:    form.mobile,
+        //   email:     form.email,
+        //   city:      form.city,
+        //   zone:      form.zone,
+        //   comment:   form.comment,
+        // },
+        // paymentMethod:  form.payment,
+        // deliveryMethod: form.delivery,
+        // voucher:        form.voucher || null,
+        // coupon:         form.coupon  || null,
         items: cartItems.map(i => ({
+          plantId:    i.plantId,
+          image:      i.image,
           name:       i.name,
           quantity:   i.quantity,
           unitPrice:  i.price,
           totalPrice: i.price * i.quantity
-        })),
-        subtotal,
-        deliveryCharge,
-        total,
+        }))
+        // subtotal,
+        // deliveryCharge,
+        // total,
       };
 
       // write to Firestore
