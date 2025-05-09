@@ -23,11 +23,10 @@ import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
 
 import AddMaterial from "./pages/Home/supplier-comps/AddMaterial";
+import PendingOrder from "./pages/Home/supplier-comps/pendingOrder";
 
 import NurseryCart from "./pages/Home/nursery-comps/NurseryCart";
 import { CartProvider } from "./providers/CartProvider";
-
-
 
 const router = createBrowserRouter([
   {
@@ -73,7 +72,6 @@ const router = createBrowserRouter([
             <Cart />
           </PrivateRoute>
         ),
-        
       },
       {
         path: "/nurserycart",
@@ -101,7 +99,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/supplier/pending-orders",
-            element: <div>Pending Orders Page</div>,
+            element: <PendingOrder />,
           },
           {
             path: "/supplier/add-material",
@@ -158,7 +156,7 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
-      <CartProvider>            
+      <CartProvider>
         <RouterProvider router={router} />
       </CartProvider>
     </AuthProvider>
