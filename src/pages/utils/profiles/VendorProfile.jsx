@@ -13,6 +13,7 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
         zipCode: "",
         country: ""
     });
+    const [originalAddress, setOriginalAddress] = useState(null);
     const [isEditingAddress, setIsEditingAddress] = useState(false);
     const [stats, setStats] = useState({
         totalMaterials: 0,
@@ -37,6 +38,7 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                 // Fetch address if it exists
                 if (userData?.address) {
                     setAddress(userData.address);
+                    setOriginalAddress(userData.address);
                 }
 
                 // Fetch stats
@@ -59,10 +61,16 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
             await updateDoc(userRef, {
                 address: address
             });
+            setOriginalAddress(address);
             setIsEditingAddress(false);
         } catch (error) {
             console.error("Error updating address:", error);
         }
+    };
+
+    const handleCancelEdit = () => {
+        setAddress(originalAddress);
+        setIsEditingAddress(false);
     };
 
     return (
@@ -85,7 +93,7 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="text-xl font-semibold text-[#02542d]">Address Details</h4>
                     <button
-                        onClick={() => setIsEditingAddress(!isEditingAddress)}
+                        onClick={() => isEditingAddress ? handleCancelEdit() : setIsEditingAddress(true)}
                         className="text-[#3a5a40] hover:text-[#02542d] font-medium"
                     >
                         {isEditingAddress ? "Cancel" : "Edit Address"}
