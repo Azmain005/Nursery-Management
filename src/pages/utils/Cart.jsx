@@ -1,4 +1,5 @@
 // src/pages/utils/Cart.jsx
+
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../../providers/CartProvider";
@@ -6,6 +7,14 @@ import { doc, updateDoc, runTransaction } from "firebase/firestore";
 import { db } from "../../Auth/firebase.init";
 import { IoMdClose } from "react-icons/io";
 import EmptyCartImage from "../../assets/empty-cart.png";
+import { doc, updateDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { IoMdClose, IoMdRefresh } from 'react-icons/io';
+import { NavLink } from 'react-router-dom';
+import EmptyCartImage from '../../assets/empty-cart.png'; // add your illustration here
+import { db } from '../../Auth/firebase.init';
+import { useCart } from '../../providers/CartProvider';
+
 
 const Cart = () => {
   const { cartItems, removeFromCart } = useCart();

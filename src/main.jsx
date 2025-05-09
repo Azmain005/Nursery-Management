@@ -21,9 +21,9 @@ import Profile from "./pages/utils/profile";
 import Settings from "./pages/utils/settings";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
+
+import AddMaterial from "./pages/Home/supplier-comps/AddMaterial";
 import { CartProvider } from "./providers/CartProvider";
-
-
 
 
 
@@ -88,6 +88,16 @@ const router = createBrowserRouter([
             <Supplier />
           </PrivateRoute>
         ),
+        children: [
+          {
+            path: "/supplier/pending-orders",
+            element: <div>Pending Orders Page</div>,
+          },
+          {
+            path: "/supplier/add-material",
+            element: <AddMaterial />,
+          },
+        ],
       },
       {
         path: "/nurseryWorker",
