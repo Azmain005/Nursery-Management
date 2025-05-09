@@ -1,14 +1,14 @@
 // src/providers/CartProvider.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
 import {
-  collection,
   addDoc,
+  collection,
   doc,
   onSnapshot,
   query,
-  where,
-  runTransaction
+  runTransaction,
+  where
 } from "firebase/firestore";
+import { createContext, useContext, useEffect, useState } from "react";
 import { db } from "../Auth/firebase.init";
 import { AuthContext } from "./AuthProvider";
 

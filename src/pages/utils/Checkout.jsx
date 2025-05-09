@@ -1,5 +1,5 @@
 // src/pages/utils/Checkout.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useCart } from '../../providers/CartProvider';
 
