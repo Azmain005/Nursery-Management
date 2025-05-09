@@ -140,7 +140,7 @@ const Navbar = () => {
               >
                 <p className="text-sm text-center text-emerald-900">
                   Welcome,
-                  <br /> {user.email}
+                  <br /> {user.name}
                 </p>
                 <div className="divider my-0"></div>
                 <li>
