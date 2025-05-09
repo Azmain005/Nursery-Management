@@ -21,13 +21,12 @@ const Footer = () => {
         flex flex-col items-center justify-center
         md:flex-row md:flex-wrap md:gap-5 md:justify-evenly md:items-center
         text-[#3e5931]
-        bg-cover
+        bg-contain
       "
       style={{
-        backgroundImage: `url(${footer}), url(${footer})`,
-        backgroundPosition: "left, right-bottom",
-        backgroundRepeat: "no-repeat, no-repeat",
-        backgroundSize: "40% auto, 40% auto",
+        backgroundImage: `url(${footer})`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
       }}
     >
       <div className="flex flex-col items-start border-none rounded-xl bg-[#9bab9a]/60 backdrop-blur-md backdrop-filter p-5 mr-10 w-[244px] h-[403px]">
