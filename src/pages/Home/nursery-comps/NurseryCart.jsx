@@ -8,7 +8,6 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
-import { IoMdRefresh, IoMdClose } from "react-icons/io";
 import EmptyCartImage from "../../../assets/empty-cart.png";
 
 const NurseryCart = () => {
@@ -24,12 +23,12 @@ const NurseryCart = () => {
         const querySnapshot = await getDocs(collection(db, "nursery_cart"));
         const items = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((item) => item.userId === user.uid);
+          .filter((item) => item.userId === user.uid); // Ensure userId matches user.uid
         setCartItems(items);
 
         const initQuantities = {};
         items.forEach((item) => {
-          initQuantities[item.id] = item.quantity;
+          initQuantities[item.id] = item.quantity || 1; // Default quantity to 1 if not present
         });
         setQuantities(initQuantities);
       } catch (error) {
@@ -42,20 +41,24 @@ const NurseryCart = () => {
     fetchCartItems();
   }, [user]);
 
-  const handleQtyChange = (id, delta) => {
+  const handleQtyChange = async (id, delta) => {
+    const newQty = Math.max(1, (quantities[id] || 1) + delta);
     setQuantities((q) => ({
       ...q,
-      [id]: Math.max(1, (q[id] || 1) + delta),
+      [id]: newQty,
     }));
-  };
 
-  const handleUpdate = async (id) => {
-    const newQty = quantities[id];
-    const current = cartItems.find((item) => item.id === id)?.quantity;
-    if (newQty && newQty !== current) {
+    const updatedCartItems = cartItems.map((item) =>
+      item.id === id ? { ...item, quantity: newQty } : item
+    );
+    setCartItems(updatedCartItems);
+
+    try {
       await updateDoc(doc(db, "nursery_cart", id), {
         quantity: newQty,
       });
+    } catch (error) {
+      console.error("Error updating quantity:", error);
     }
   };
 
@@ -70,10 +73,9 @@ const NurseryCart = () => {
     }
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const calculateTotal = () => {
+    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  };
 
   return (
     <div className="min-h-screen bg-[#faf6e9] flex flex-col">
@@ -97,20 +99,19 @@ const NurseryCart = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white rounded-lg p-4 shadow">
+          <div className="overflow-x-auto bg-[#faf6e9] rounded-lg p-4">
             <table className="min-w-full">
               <thead>
-                <tr className="text-left text-[#607b64] border-b">
+                <tr className="text-left text-[#607b64]">
                   <th className="p-2">Image</th>
                   <th className="p-2">Product Name</th>
                   <th className="p-2">Quantity</th>
-                  <th className="p-2">Unit Price</th>
-                  <th className="p-2">Total</th>
+                  <th className="p-2">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
                 {cartItems.map((item) => (
-                  <tr key={item.id} className="border-b">
+                  <tr key={item.id} className="bg-[#faf6e9]">
                     <td className="p-2">
                       <img
                         src={item.image || "https://via.placeholder.com/150"}
@@ -141,7 +142,6 @@ const NurseryCart = () => {
                         </button>
                       </div>
                     </td>
-                    <td className="p-2 text-[#2c5c2c]">${item.price}</td>
                     <td className="p-2 text-[#2c5c2c]">
                       ${item.price * item.quantity}
                     </td>
@@ -150,26 +150,19 @@ const NurseryCart = () => {
               </tbody>
             </table>
 
-            <div className="mt-6 flex justify-end">
-              <div className="bg-[#607b64] text-white p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span>Sub-Total:</span>
-                  <span>${subtotal}</span>
-                </div>
+            <div className="mt-6 flex justify-between">
+              <button
+                onClick={() => (window.location.href = "/maintenance")}
+                className="btn bg-[#02542d] text-white"
+              >
+                Order More
+              </button>
+              <div className="bg-[#607b64] text-white p-4 rounded-lg">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>${subtotal}</span>
+                  <span>${calculateTotal()}</span>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-6 flex justify-between">
-              <button className="btn bg-[#02542d] text-white">
-                Continue Shopping
-              </button>
-              <button className="btn bg-[#02542d] text-white">
-                Confirm Order
-              </button>
             </div>
           </div>
         )}
