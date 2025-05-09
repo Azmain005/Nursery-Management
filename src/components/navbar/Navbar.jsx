@@ -1,15 +1,27 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { IoMdContact, IoMdSettings } from "react-icons/io";
 import { NavLink } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { AuthContext } from "../../providers/AuthProvider";
 import { useCart } from "../../providers/CartProvider";
 
-
-
 const Navbar = () => {
-  const { user, signOutUser } = useContext(AuthContext);
-  const { cartItems } = useCart();  // ← get live cart
+  const { user, signOutUser, getRoleFromDatabase } = useContext(AuthContext);
+  const { cartItems } = useCart(); // ← get live cart
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    getRoleFromDatabase(user)
+      .then((user) => {
+        setUserData(user);
+      })
+      .catch((error) => {
+        console.error("Error fetching user data:", error);
+      });
+  }, [user]);
+
+  console.log(userData);
+
   const handleSignout = () => {
     signOutUser()
       .then(() => {
@@ -21,6 +33,10 @@ const Navbar = () => {
         console.error("Sign out error", error);
       });
   };
+
+  // Check if user is a supplier
+  const isSupplier = userData === "Supplier";
+  console.log("userrrrrrrrrrrrrrrrrrrrr", user);
   return (
     <div>
       <div className="navbar bg-[#faf6e9] border-b-2 border-[#3e5931]">
@@ -34,58 +50,67 @@ const Navbar = () => {
         </div>
         {user ? (
           <div className="flex-none mr-5">
-            <div className="dropdown dropdown-end bg-[#02542d] text-white rounded-full mr-3">
-              <div
-                tabIndex={0}
-                role="button"
-                className="btn btn-ghost btn-circle"
-              >
-                <div className="indicator">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    {" "}
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                    />{" "}
-                  </svg>
-                  <span className="badge badge-xs indicator-item">
-                    {cartItems.length}
-                  </span>
-
-                </div>
-              </div>
-              <div
-                tabIndex={0}
-                className="card card-compact dropdown-content bg-base-100 z-50 mt-5 w-52 shadow"
-              >
-                <div className="card-body bg-[#9bab9a] text-white">
-                  <span className="text-lg font-bold">
-                    {cartItems.length} Item{cartItems.length !== 1 ? "s" : ""}
-                  </span>
-                  <span className="text-info text-white">
-                    Subtotal: ৳
-                    {cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
-                  </span>
-
-                  <div className="card-actions">
-                    <NavLink
-                      to="/cart"
-                      className="btn btn-primary bg-[#02542d] border-none shadow-none btn-block"
+            {/* Only show cart if user is NOT a supplier */}
+            {!isSupplier && (
+              <div className="dropdown dropdown-end bg-[#02542d] text-white rounded-full mr-3">
+                <div
+                  tabIndex={0}
+                  role="button"
+                  className="btn btn-ghost btn-circle"
+                >
+                  <div className="indicator">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      View cart
-                    </NavLink>
+                      {" "}
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                      />{" "}
+                    </svg>
+                    <span className="badge badge-xs indicator-item">
+                      {cartItems.length}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  tabIndex={0}
+                  className="card card-compact dropdown-content bg-base-100 z-50 mt-5 w-52 shadow"
+                >
+                  <div className="card-body bg-[#9bab9a] text-white">
+                    <span className="text-lg font-bold">
+                      {cartItems.length} Item{cartItems.length !== 1 ? "s" : ""}
+                    </span>
+                    <span className="text-info text-white">
+                      Subtotal: ৳
+                      {cartItems.reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0
+                      )}
+                    </span>
+
+                    <div className="card-actions">
+                      <NavLink
+                        to={
+                          userData === "NurseryWorker"
+                            ? "/nurserycart"
+                            : "/cart"
+                        }
+                        className="btn btn-primary bg-[#02542d] border-none shadow-none btn-block"
+                      >
+                        View cart
+                      </NavLink>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
             <div className="dropdown dropdown-end">
               <div
                 tabIndex={0}
@@ -108,7 +133,7 @@ const Navbar = () => {
               >
                 <p className="text-sm text-center text-emerald-900">
                   Welcome,
-                  <br /> {user.email}
+                  <br /> {user.displayName}
                 </p>
                 <div className="divider my-0"></div>
                 <li>

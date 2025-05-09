@@ -25,6 +25,7 @@ import AuthProvider from "./providers/AuthProvider";
 import AddMaterial from "./pages/Home/supplier-comps/AddMaterial";
 
 import { CartProvider } from "./providers/CartProvider";
+import NurseryCart from "./pages/Home/nursery-comps/NurseryCart";
 
 
 
@@ -70,6 +71,15 @@ const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <Cart />
+          </PrivateRoute>
+        ),
+        
+      },
+      {
+        path: "/nurserycart",
+        element: (
+          <PrivateRoute>
+            <NurseryCart />
           </PrivateRoute>
         ),
       },
