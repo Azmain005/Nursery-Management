@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, where } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
 import { AuthContext } from "../../../providers/AuthProvider";
 import { IoIosSearch } from "react-icons/io";
@@ -49,9 +49,20 @@ const Maintenance = () => {
   }, [searchTerm, materials]);
 
   const handleAddToCart = async (material) => {
+    setIsLoading(true);
     try {
+      const userDoc = await getDocs(
+        collection(db, "user_data"),
+        where("uid", "==", user.uid)
+      );
+      const userId = userDoc.docs[0]?.id;
+
+      if (!userId) {
+        throw new Error("User not found in user_data collection");
+      }
+
       await addDoc(collection(db, "nursery_cart"), {
-        userId: user.uid,
+        userId: userId,
         materialId: material.id,
         name: material.name,
         price: material.price,
@@ -61,6 +72,8 @@ const Maintenance = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("Failed to add to cart. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
