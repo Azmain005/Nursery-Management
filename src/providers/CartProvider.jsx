@@ -3,10 +3,13 @@ import {
   addDoc,
   collection,
   doc,
+  getDocs,
   onSnapshot,
   query,
   runTransaction,
-  where
+  updateDoc,
+  where,
+  writeBatch
 } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
 import { db } from "../Auth/firebase.init";
@@ -19,6 +22,7 @@ export function CartProvider({ children }) {
   const { user } = useContext(AuthContext);
   const [cartItems, setCartItems] = useState([]);
 
+  // subscribe to /cart?userId==…
   useEffect(() => {
     if (!user) {
       setCartItems([]);
@@ -34,51 +38,66 @@ export function CartProvider({ children }) {
     return () => unsub();
   }, [user]);
 
-  const addToCart = async plant => {
-    await addDoc(collection(db, "cart"), {
-      userId: user.uid,
-      plantId: plant.id,
-      name: plant.name,
-      price: plant.price,
-      image: plant.image,
-      quantity: 1,
-    });
+  // Add a plant—if it’s already there, bump its quantity
+  const addToCart = async (plant) => {
+    const col = collection(db, "cart");
+    const q = query(
+      col,
+      where("userId", "==", user.uid),
+      where("plantId", "==", plant.id)
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      // increment existing line
+      const existing = snap.docs[0];
+      const oldQty = existing.data().quantity || 0;
+      await updateDoc(existing.ref, { quantity: oldQty + 1 });
+    } else {
+      // brand‐new line
+      await addDoc(col, {
+        userId: user.uid,
+        plantId: plant.id,
+        name: plant.name,
+        price: plant.price,
+        image: plant.image,
+        quantity: 1,
+      });
+    }
   };
 
-  const removeFromCart = async cartItem => {
+  // Remove one line from cart AND restore its stock in inventory
+  const removeFromCart = async (cartItem) => {
     const cartRef = doc(db, "cart", cartItem.id);
-    const invRef = doc(db, "inventory", cartItem.plantId);
+    const invRef  = doc(db, "inventory", cartItem.plantId);
 
     try {
       await runTransaction(db, async tx => {
-        // 1️⃣ Read the current stock first
         const invSnap = await tx.get(invRef);
-        const currentStock = invSnap.exists()
-          ? invSnap.data().stock || 0
-          : 0;
-
-        // 2️⃣ Update the stock
-        tx.update(invRef, {
-          stock: currentStock + cartItem.quantity,
-        });
-
-        // 3️⃣ Only after all reads, delete the cart line
+        const currentStock = invSnap.exists() ? invSnap.data().stock || 0 : 0;
+        tx.update(invRef, { stock: currentStock + cartItem.quantity });
         tx.delete(cartRef);
       });
-
-      // 4️⃣ Update local state
-      setCartItems(items =>
-        items.filter(i => i.id !== cartItem.id)
-      );
+      // update local state to remove it immediately
+      setCartItems(items => items.filter(i => i.id !== cartItem.id));
     } catch (err) {
       console.error("Failed to remove from cart & restore stock:", err);
       alert(`Could not remove item: ${err.message}`);
     }
   };
 
+  // Clear entire cart (used after checkout)
+  const clearCart = async () => {
+    const batch = writeBatch(db);
+    cartItems.forEach(item => {
+      const cartRef = doc(db, "cart", item.id);
+      batch.delete(cartRef);
+    });
+    await batch.commit();
+  };
+
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart }}
+      value={{ cartItems, addToCart, removeFromCart, clearCart }}
     >
       {children}
     </CartContext.Provider>
