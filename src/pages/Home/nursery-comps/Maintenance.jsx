@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { collection, getDocs, addDoc, where } from "firebase/firestore";
+import { collection, getDocs, addDoc, where, query } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
 import { AuthContext } from "../../../providers/AuthProvider";
 import { IoIosSearch } from "react-icons/io";
@@ -13,6 +13,7 @@ const Maintenance = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
   const materialsPerPage = 12; // 4 rows * 3 cards per row
   const { user } = useContext(AuthContext);
 
@@ -49,30 +50,60 @@ const Maintenance = () => {
     }
   }, [searchTerm, materials]);
 
+  const fetchWorkerCartItems = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch the logged-in user's ID from AuthContext
+      const userId = user.uid; // Assuming `user.uid` is available in AuthContext
+
+      if (!userId) {
+        throw new Error("User ID not found. Please log in again.");
+      }
+
+      // Query the nursery_cart collection for items added by the logged-in worker
+      const cartQuery = query(
+        collection(db, "nursery_cart"),
+        where("workerId", "==", userId)
+      );
+
+      const querySnapshot = await getDocs(cartQuery);
+      const cartItems = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setCartItems(cartItems); // Update state with the worker's cart items
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      alert("Failed to fetch cart items. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAddToCart = async (material) => {
     setIsLoading(true);
     try {
-      // Fetch the logged-in user's email from AuthContext
+      // Fetch the logged-in user's email and ID from AuthContext
       const userEmail = user.email;
+      const userId = user.uid; // Assuming `user.uid` is available in AuthContext
 
-      // Query the user_data collection to find the document ID for this email
-      const userQuery = await getDocs(
-        collection(db, "user_data"),
-        where("email", "==", userEmail)
-      );
-      const userId = userQuery.docs[0]?.id;
       if (!userId) {
-        throw new Error("User not found in user_data collection");
+        throw new Error("User ID not found. Please log in again.");
       }
 
-      // Add the material to the nursery_cart collection with the user's document ID
+      // Add the material to the nursery_cart collection with the worker's ID
       await addDoc(collection(db, "nursery_cart"), {
-        userId: userId,
+        workerId: userId, // Associate the material with the worker
         materialId: material.id,
         name: material.name,
         price: material.price,
-        image: material.image,
+        quantity: material.quantity, // Include quantity
+        description: material.description || "", // Include description if available
+        image: material.image || "https://via.placeholder.com/150", // Default image if not provided
+        addedAt: new Date().toISOString(), // Timestamp for when the material was added
       });
+
       alert(`${material.name} added to cart successfully!`);
     } catch (error) {
       console.error("Error adding to cart:", error);
