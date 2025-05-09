@@ -51,16 +51,18 @@ const Maintenance = () => {
   const handleAddToCart = async (material) => {
     setIsLoading(true);
     try {
-      const userDoc = await getDocs(
+      // Fetch the logged-in user's document ID using their email
+      const userQuery = await getDocs(
         collection(db, "user_data"),
-        where("uid", "==", user.uid)
+        where("email", "==", user.email)
       );
-      const userId = userDoc.docs[0]?.id;
+      const userId = userQuery.docs[0]?.id;
 
       if (!userId) {
         throw new Error("User not found in user_data collection");
       }
 
+      // Add the material to the cart with the user's document ID
       await addDoc(collection(db, "nursery_cart"), {
         userId: userId,
         materialId: material.id,
