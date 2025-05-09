@@ -3,8 +3,13 @@ import { IoMdContact, IoMdSettings } from "react-icons/io";
 import { NavLink } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { AuthContext } from "../../providers/AuthProvider";
+import { useCart } from "../../providers/CartProvider";
+
+
+
 const Navbar = () => {
   const { user, signOutUser } = useContext(AuthContext);
+  const { cartItems } = useCart();  // ← get live cart
   const handleSignout = () => {
     signOutUser()
       .then(() => {
@@ -51,16 +56,25 @@ const Navbar = () => {
                       d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                     />{" "}
                   </svg>
-                  <span className="badge badge-xs indicator-item">0</span>
+                  <span className="badge badge-xs indicator-item">
+                    {cartItems.length}
+                  </span>
+
                 </div>
               </div>
               <div
                 tabIndex={0}
-                className="card card-compact dropdown-content bg-base-100 z-1 mt-3 w-52 shadow"
+                className="card card-compact dropdown-content bg-base-100 z-50 mt-5 w-52 shadow"
               >
                 <div className="card-body bg-[#9bab9a] text-white">
-                  <span className="text-lg font-bold">0 Items</span>
-                  <span className="text-info text-white">Subtotal: 0</span>
+                  <span className="text-lg font-bold">
+                    {cartItems.length} Item{cartItems.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-info text-white">
+                    Subtotal: ৳
+                    {cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+                  </span>
+
                   <div className="card-actions">
                     <NavLink
                       to="/cart"
