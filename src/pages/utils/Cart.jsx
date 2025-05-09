@@ -1,41 +1,45 @@
 // src/pages/utils/Cart.jsx
-import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import { useCart } from '../../providers/CartProvider';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../Auth/firebase.init';
-import { IoMdRefresh, IoMdClose } from 'react-icons/io';
-import EmptyCartImage from '../../assets/empty-cart.png'; // add your illustration here
+import React, { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useCart } from "../../providers/CartProvider";
+import { doc, updateDoc, runTransaction } from "firebase/firestore";
+import { db } from "../../Auth/firebase.init";
+import { IoMdClose } from "react-icons/io";
+import EmptyCartImage from "../../assets/empty-cart.png";
 
 const Cart = () => {
   const { cartItems, removeFromCart } = useCart();
   const [quantities, setQuantities] = useState({});
+  const navigate = useNavigate();
 
   // Initialize local quantity state from cartItems
   useEffect(() => {
     const init = {};
-    cartItems.forEach(item => {
+    cartItems.forEach((item) => {
       init[item.id] = item.quantity;
     });
     setQuantities(init);
   }, [cartItems]);
 
-  // Change quantity locally
-  const handleQtyChange = (id, delta) => {
-    setQuantities(q => ({
-      ...q,
-      [id]: Math.max(1, (q[id] || 1) + delta)
-    }));
-  };
+  // Handles +/- clicks, writes immediately to Firestore and updates UI
+  const handleQtyChange = async (id, delta) => {
+    const newQty = Math.max(1, (quantities[id] || 1) + delta);
 
-  // Persist quantity update to Firestore
-  const handleUpdate = async (id) => {
-    const newQty = quantities[id];
-    const current = cartItems.find(item => item.id === id)?.quantity;
-    if (newQty && newQty !== current) {
-      await updateDoc(doc(db, 'cart', id), {
-        quantity: newQty
-      });
+    // Optimistically update UI
+    setQuantities((q) => ({ ...q, [id]: newQty }));
+
+    try {
+      // Persist to Firestore
+      await updateDoc(doc(db, "cart", id), { quantity: newQty });
+      // onSnapshot will sync cartItems for you
+    } catch (err) {
+      console.error("Failed to update quantity:", err);
+      // rollback UI change on failure
+      setQuantities((q) => ({
+        ...q,
+        [id]: cartItems.find((i) => i.id === id)?.quantity || 1,
+      }));
+      alert("Couldn’t update quantity. Please try again.");
     }
   };
 
@@ -45,16 +49,41 @@ const Cart = () => {
     0
   );
 
+  // NEW: Confirm Order handler
+  const handleConfirmOrder = async () => {
+    try {
+      // For each cart‐line, decrement its inventory.stock
+      await Promise.all(
+        cartItems.map((cartLine) => {
+          const invRef = doc(db, "inventory", cartLine.plantId);
+          return runTransaction(db, async (tx) => {
+            const invSnap = await tx.get(invRef);
+            const currentStock = invSnap.data()?.stock ?? 0;
+            if (currentStock < cartLine.quantity) {
+              throw new Error(
+                `Not enough stock for "${cartLine.name}". Only ${currentStock} left.`
+              );
+            }
+            tx.update(invRef, { stock: currentStock - cartLine.quantity });
+          });
+        })
+      );
+      // All transactions succeeded → go to checkout:
+      navigate("/checkout");
+    } catch (err) {
+      console.error("Failed to confirm order:", err);
+      alert(err.message || "Could not confirm order. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#faf6e9] flex flex-col">
-      
       <main className="flex-1 flex flex-col p-6">
         <h1 className="text-2xl font-semibold text-[#2c5c2c] mb-6">
           Shopping Cart
         </h1>
 
         {cartItems.length === 0 ? (
-          // Empty state illustration
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <img
               src={EmptyCartImage}
@@ -65,10 +94,7 @@ const Cart = () => {
             <p className="text-lg text-gray-600 mb-4">
               Your shopping cart is empty!
             </p>
-            <NavLink
-              to="/"
-              className="btn bg-[#02542d] text-white"
-            >
+            <NavLink to="/" className="btn bg-[#02542d] text-white">
               Continue
             </NavLink>
           </div>
@@ -85,7 +111,7 @@ const Cart = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map(item => (
+                {cartItems.map((item) => (
                   <tr key={item.id} className="border-b">
                     <td className="p-2">
                       <img
@@ -101,7 +127,7 @@ const Cart = () => {
                           onClick={() => handleQtyChange(item.id, -1)}
                           className="px-2 py-1 bg-gray-200 rounded"
                         >
-                          -
+                          –
                         </button>
                         <input
                           type="text"
@@ -116,13 +142,7 @@ const Cart = () => {
                           +
                         </button>
                         <button
-                          onClick={() => handleUpdate(item.id)}
-                          className="text-[#02542d] hover:text-[#013f1a]"
-                        >
-                          <IoMdRefresh />
-                        </button>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => removeFromCart(item)}
                           className="text-red-500 hover:text-red-700"
                         >
                           <IoMdClose />
@@ -152,23 +172,20 @@ const Cart = () => {
             </div>
 
             <div className="mt-6 flex justify-between">
-              <NavLink
-                to="/"
-                className="btn bg-[#02542d] text-white"
-              >
+              <NavLink to="/" className="btn bg-[#02542d] text-white">
                 Continue Shopping
               </NavLink>
-              <NavLink
-                to="/checkout"
+              {/* REPLACED with a button so we can run stock‐update logic */}
+              <button
+                onClick={handleConfirmOrder}
                 className="btn bg-[#02542d] text-white"
               >
                 Confirm Order
-              </NavLink>
+              </button>
             </div>
           </div>
         )}
       </main>
-      
     </div>
   );
 };
