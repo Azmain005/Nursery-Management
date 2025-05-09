@@ -1,13 +1,11 @@
 // src/pages/utils/Cart.jsx
-
 import { doc, runTransaction, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { NavLink, useNavigate } from "react-router-dom";
-import EmptyCartImage from "../../assets/empty-cart.png";
 import { db } from "../../Auth/firebase.init";
+import EmptyCartImage from "../../assets/empty-cart.png";
 import { useCart } from "../../providers/CartProvider";
-
 
 const Cart = () => {
   const { cartItems, removeFromCart } = useCart();
@@ -23,20 +21,16 @@ const Cart = () => {
     setQuantities(init);
   }, [cartItems]);
 
-  // Handles +/- clicks, writes immediately to Firestore and updates UI
+  // Handles +/- clicks: optimistically update UI and Firestore
   const handleQtyChange = async (id, delta) => {
     const newQty = Math.max(1, (quantities[id] || 1) + delta);
-
-    // Optimistically update UI
     setQuantities((q) => ({ ...q, [id]: newQty }));
 
     try {
-      // Persist to Firestore
       await updateDoc(doc(db, "cart", id), { quantity: newQty });
-      // onSnapshot will sync cartItems for you
+      // onSnapshot will pick up the change and sync cartItems
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      // rollback UI change on failure
       setQuantities((q) => ({
         ...q,
         [id]: cartItems.find((i) => i.id === id)?.quantity || 1,
@@ -51,10 +45,9 @@ const Cart = () => {
     0
   );
 
-  // NEW: Confirm Order handler
+  // Confirm Order: decrement inventory stock then navigate to checkout
   const handleConfirmOrder = async () => {
     try {
-      // For each cart‐line, decrement its inventory.stock
       await Promise.all(
         cartItems.map((cartLine) => {
           const invRef = doc(db, "inventory", cartLine.plantId);
@@ -70,8 +63,8 @@ const Cart = () => {
           });
         })
       );
-      // All transactions succeeded → go to checkout:
-      navigate("/checkout");
+      // pass the confirmed lines into checkout
+      navigate("/checkout", { state: { cartItems } });
     } catch (err) {
       console.error("Failed to confirm order:", err);
       alert(err.message || "Could not confirm order. Please try again.");
@@ -97,7 +90,7 @@ const Cart = () => {
               Your shopping cart is empty!
             </p>
             <NavLink to="/" className="btn bg-[#02542d] text-white">
-              Continue
+              Continue Shopping
             </NavLink>
           </div>
         ) : (
@@ -177,7 +170,6 @@ const Cart = () => {
               <NavLink to="/" className="btn bg-[#02542d] text-white">
                 Continue Shopping
               </NavLink>
-              {/* REPLACED with a button so we can run stock‐update logic */}
               <button
                 onClick={handleConfirmOrder}
                 className="btn bg-[#02542d] text-white"
