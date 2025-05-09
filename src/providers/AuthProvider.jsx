@@ -48,6 +48,7 @@ const AuthProvider = ({ children }) => {
   //checking if the user is logged in or not
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Auth state changed. Current user:", currentUser); // Debug log
       setUser(currentUser);
       setLoading(false);
     });
@@ -86,19 +87,22 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  //   // get user data from database
+  // get user data from database
   const getUserData = async (user) => {
+    console.log("getUserData called with user:", user); // Debug log
     try {
       const docRef = doc(db, "user_data", user.uid);
-
       const docSnap = await getDoc(docRef);
+      console.log("Firestore document snapshot:", docSnap.exists() ? docSnap.data() : "No document"); // Debug log
       if (docSnap.exists()) {
         return docSnap.data();
       } else {
         console.log("No such document!");
+        return { role: 'Not set' }; // Return default data if document doesn't exist
       }
     } catch (error) {
       console.error("Error getting user data from database:", error);
+      return { role: 'Not set' }; // Return default data on error
     }
   };
 
