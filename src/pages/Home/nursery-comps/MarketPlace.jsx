@@ -16,7 +16,8 @@ import {
   TrendingUp,
   User,
   X,
-} from "lucide-react";
+} 
+from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Bar,
