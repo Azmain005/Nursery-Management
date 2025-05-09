@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
-import { FaUser, FaMapMarkerAlt, FaClipboardList, FaBox, FaTruck } from "react-icons/fa";
+import { FaUser, FaMapMarkerAlt } from "react-icons/fa";
 import { ProfileHeader } from "./CommonComponents";
 
 const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDisplayName, handleUpdatePassword, newPassword, setNewPassword, confirmPassword, setConfirmPassword }) => {
@@ -13,37 +13,49 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
         zipCode: "",
         country: ""
     });
+    const [originalAddress, setOriginalAddress] = useState(null);
     const [isEditingAddress, setIsEditingAddress] = useState(false);
-    const [stats, setStats] = useState({
-        totalMaterials: 0,
-        lowStock: 0,
-        outOfStock: 0
-    });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch order history
-                const ordersRef = collection(db, "orders");
-                const ordersSnapshot = await getDocs(ordersRef);
+                // Fetch order history from cart
+                const cartRef = collection(db, "cart");
+                const cartSnapshot = await getDocs(cartRef);
                 const orders = [];
-                ordersSnapshot.forEach(doc => {
-                    if (doc.data().userId === user.uid) {
-                        orders.push({ id: doc.id, ...doc.data() });
+                
+                // Fetch all user data for names
+                const userDataRef = collection(db, "user_data");
+                const userDataSnapshot = await getDocs(userDataRef);
+                const userDataMap = {};
+                userDataSnapshot.forEach(doc => {
+                    userDataMap[doc.id] = doc.data();
+                });
+
+                cartSnapshot.forEach(doc => {
+                    const cartData = doc.data();
+                    if (cartData.userId === user.uid) {
+                        const buyerData = userDataMap[cartData.userId];
+                        const totalAmount = (cartData.price || 0) * (cartData.quantity || 0);
+
+                        orders.push({ 
+                            id: doc.id, 
+                            ...cartData,
+                            date: cartData.timestamp?.toDate() || new Date(),
+                            buyerName: buyerData?.displayName || 'Unknown User',
+                            totalAmount
+                        });
                     }
                 });
+                // Sort orders by date, most recent first
+                orders.sort((a, b) => b.date - a.date);
                 setOrderHistory(orders);
 
                 // Fetch address if it exists
                 if (userData?.address) {
                     setAddress(userData.address);
+                    setOriginalAddress(userData.address);
                 }
-
-                // Fetch stats
-                const statsRef = collection(db, "stats");
-                const statsSnapshot = await getDocs(statsRef);
-                const statsData = statsSnapshot.docs[0].data();
-                setStats(statsData);
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -59,10 +71,16 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
             await updateDoc(userRef, {
                 address: address
             });
+            setOriginalAddress(address);
             setIsEditingAddress(false);
         } catch (error) {
             console.error("Error updating address:", error);
         }
+    };
+
+    const handleCancelEdit = () => {
+        setAddress(originalAddress);
+        setIsEditingAddress(false);
     };
 
     return (
@@ -85,7 +103,7 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="text-xl font-semibold text-[#02542d]">Address Details</h4>
                     <button
-                        onClick={() => setIsEditingAddress(!isEditingAddress)}
+                        onClick={() => isEditingAddress ? handleCancelEdit() : setIsEditingAddress(true)}
                         className="text-[#3a5a40] hover:text-[#02542d] font-medium"
                     >
                         {isEditingAddress ? "Cancel" : "Edit Address"}
@@ -174,56 +192,22 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                     <div className="space-y-4">
                         {orderHistory.map(order => (
                             <div key={order.id} className="border-b border-[#C8C0C0] pb-4 last:border-b-0">
-                                <p className="font-medium text-[#02542d]">Order #{order.id}</p>
-                                <p className="text-sm text-gray-600">Date: {new Date(order.date).toLocaleDateString()}</p>
-                                <p className="text-sm text-gray-600">Status: {order.status}</p>
-                                {order.items && (
-                                    <div className="mt-2">
-                                        <p className="text-sm font-medium text-gray-600">Items:</p>
-                                        <ul className="list-disc list-inside text-sm text-gray-600">
-                                            {order.items.map((item, index) => (
-                                                <li key={index}>{item.name} - Quantity: {item.quantity}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
+                                <div className="space-y-2">
+                                    <p className="font-medium text-[#02542d]">Order #{order.id}</p>
+                                    <p className="text-sm text-gray-600">Date: {order.date.toLocaleDateString()}</p>
+                                    <p className="text-sm text-gray-600">Status: {order.status || 'Pending'}</p>
+                                    <p className="text-sm text-gray-600">Buyer: {order.buyerName}</p>
+                                    <p className="text-sm text-gray-600">Name: {order.name}</p>
+                                    <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
+                                    <p className="text-sm text-gray-600">Price: ${(order.totalAmount / order.quantity).toFixed(2)}</p>
+                                    <p className="text-sm font-medium text-gray-600">Total Amount: ${order.totalAmount.toFixed(2)}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
                 ) : (
                     <p className="text-gray-600">No orders yet</p>
                 )}
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#FAF6E9] p-6 rounded-lg border border-[#C8C0C0]">
-                    <div className="flex items-center">
-                        <FaBox className="h-8 w-8 text-[#3a5a40]" />
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Total Materials</p>
-                            <p className="text-2xl font-semibold text-[#02542d]">{stats.totalMaterials}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-[#FAF6E9] p-6 rounded-lg border border-[#C8C0C0]">
-                    <div className="flex items-center">
-                        <FaBox className="h-8 w-8 text-[#3a5a40]" />
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Low Stock</p>
-                            <p className="text-2xl font-semibold text-[#02542d]">{stats.lowStock}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-[#FAF6E9] p-6 rounded-lg border border-[#C8C0C0]">
-                    <div className="flex items-center">
-                        <FaTruck className="h-8 w-8 text-[#3a5a40]" />
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Out of Stock</p>
-                            <p className="text-2xl font-semibold text-[#02542d]">{stats.outOfStock}</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

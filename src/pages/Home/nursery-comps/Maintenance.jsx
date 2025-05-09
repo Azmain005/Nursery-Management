@@ -4,6 +4,7 @@ import { db } from "../../../Auth/firebase.init";
 import { AuthContext } from "../../../providers/AuthProvider";
 import { IoIosSearch } from "react-icons/io";
 import Loader from "../../../components/Loader/Loader";
+import { IoCodeSlashOutline } from "react-icons/io5";
 
 const Maintenance = () => {
   const [materials, setMaterials] = useState([]);
@@ -59,8 +60,7 @@ const Maintenance = () => {
         collection(db, "user_data"),
         where("email", "==", userEmail)
       );
-      const userId = userQuery.docs[1]?.id;
-
+      const userId = userQuery.docs[0]?.id;
       if (!userId) {
         throw new Error("User not found in user_data collection");
       }

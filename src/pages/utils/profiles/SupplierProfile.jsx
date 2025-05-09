@@ -13,7 +13,7 @@ const SupplierProfile = ({ user, userData, handleUpdateProfile, displayName, set
 
     useEffect(() => {
         const fetchStats = async () => {
-            const materialsRef = collection(db, "raw_materials");
+            const materialsRef = collection(db, "material_for_sell");
             const materialsSnapshot = await getDocs(materialsRef);
             
             const stats = {
@@ -24,12 +24,14 @@ const SupplierProfile = ({ user, userData, handleUpdateProfile, displayName, set
             
             materialsSnapshot.forEach(doc => {
                 const material = doc.data();
-                stats.totalMaterials++;
-                if (material.stock < 5) {
-                    stats.lowStock++;
-                }
-                if (material.stock === 0) {
-                    stats.outOfStock++;
+                if (material.supplierId === user.uid) {
+                    stats.totalMaterials += material.quantity || 0;
+                    if (material.quantity <= 5 && material.quantity > 0) {
+                        stats.lowStock++;
+                    }
+                    if (material.quantity === 0) {
+                        stats.outOfStock++;
+                    }
                 }
             });
             
@@ -37,7 +39,7 @@ const SupplierProfile = ({ user, userData, handleUpdateProfile, displayName, set
         };
         
         fetchStats();
-    }, []);
+    }, [user.uid]);
 
     return (
         <div className="space-y-6 bg-[#FEFDF4] min-h-screen w-full">
