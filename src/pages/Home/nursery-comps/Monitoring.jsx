@@ -113,7 +113,7 @@ const Monitoring = () => {
     try {
       // Prepare the data to be added to inventory
       const inventoryData = {
-        plant_id: selectedPlant.id,
+        plant_id: selectedPlant.original_plant_id,
         name: selectedPlant.name || "Unknown",
         sci_name:
           selectedPlant.sci_name || selectedPlant.scientific_name || "Unknown",
@@ -123,7 +123,7 @@ const Monitoring = () => {
         stock: selectedPlant.stock,
         price: selectedPlant.price,
         image: selectedPlant.image || "https://via.placeholder.com/150",
-        added_to_inventory_date: new Date().toISOString().split("T")[0],
+        // added_to_inventory_date: new Date().toISOString().split("T")[0],
         categories: selectedPlant.categories,
       };
 

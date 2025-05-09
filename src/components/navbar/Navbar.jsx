@@ -11,6 +11,25 @@ const Navbar = () => {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
+  const { cartItems } = useCart();  // ← get live cart
+  const [userData, setUserData] = useState(null);
+  
+  useEffect(() => {
+    // const fetchUserData = async () => {
+    //     if (user?.uid) {
+    //         const docRef = doc(db, "user_data", user.uid);
+    //         const docSnap = await getDoc(docRef);
+
+    //         if (docSnap.exists()) {
+    //             setUserData(docSnap.data());
+    //         } else {
+    //             console.log("No such document!");
+    //         }
+    //     }
+    // };
+
+    // fetchUserData();
+
     getRoleFromDatabase(user)
       .then((user) => {
         setUserData(user);
@@ -20,6 +39,9 @@ const Navbar = () => {
       });
   }, [user]);
 
+  console.log(userData);
+
+  
   console.log(userData);
 
   const handleSignout = () => {
@@ -89,19 +111,27 @@ const Navbar = () => {
                     </span>
                     <span className="text-info text-white">
                       Subtotal: ৳
+
                       {cartItems.reduce(
                         (sum, item) => sum + item.price * item.quantity,
                         0
                       )}
+
+                      {cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+
                     </span>
 
                     <div className="card-actions">
                       <NavLink
+
                         to={
                           userData === "NurseryWorker"
                             ? "/nurserycart"
                             : "/cart"
                         }
+
+                        to="/cart"
+
                         className="btn btn-primary bg-[#02542d] border-none shadow-none btn-block"
                       >
                         View cart

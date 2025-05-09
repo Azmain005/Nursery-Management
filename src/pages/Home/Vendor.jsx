@@ -1,10 +1,10 @@
 // src/pages/Home/Vendor.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../../providers/CartProvider';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, runTransaction } from 'firebase/firestore';
 import LoaderPlant from '../../components/Loader/LoaderPlant';
 import { db } from '../../Auth/firebase.init';
-import HeroImage from '../../assets/leaf.png'; 
+import HeroImage from '../../assets/leaf.png';
 
 const Vendor = () => {
   const { addToCart } = useCart();
@@ -16,13 +16,20 @@ const Vendor = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch all plants on mount
+  // 1) Fetch inventory including stock
   useEffect(() => {
     async function fetchPlants() {
       setLoading(true);
       try {
         const snap = await getDocs(collection(db, 'inventory'));
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = snap.docs.map(d => {
+          const docData = d.data();
+          return {
+            id: d.id,
+            ...docData,
+            stock: Number(docData.stock) || 0,
+          };
+        });
         setAllPlants(data);
         setTotalPages(Math.ceil(data.length / plantsPerPage));
       } catch (err) {
@@ -34,37 +41,55 @@ const Vendor = () => {
     fetchPlants();
   }, []);
 
-  // Filter plants by search term
+  // live search filter
   const filteredPlants = useMemo(() => {
     if (!searchTerm.trim()) return allPlants;
     const term = searchTerm.trim().toLowerCase();
     return allPlants.filter(p => p.name.toLowerCase().includes(term));
   }, [allPlants, searchTerm]);
 
-  // Recalculate pages when filtered list changes
+  // recalc pagination when filter changes
   useEffect(() => {
     setCurrentPage(1);
     setTotalPages(Math.ceil(filteredPlants.length / plantsPerPage));
   }, [filteredPlants]);
 
-  // Slice for current page
+  // slice out the current page
   const currentPlants = useMemo(() => {
     const start = (currentPage - 1) * plantsPerPage;
     return filteredPlants.slice(start, start + plantsPerPage);
   }, [filteredPlants, currentPage]);
 
-  // Add to cart handler
-  const handleAddToCart = async (plant) => {
+  // 2) Add to cart + decrement stock via transaction
+  const handleAddToCart = async plant => {
     try {
+      // add to cart (via context)
       await addToCart(plant);
+
+      // atomically decrement stock in Firestore
+      const invRef = doc(db, 'inventory', plant.id);
+      await runTransaction(db, async tx => {
+        const invSnap = await tx.get(invRef);
+        const curr = invSnap.data().stock;
+        if (curr <= 0) {
+          throw new Error('Out of stock');
+        }
+        tx.update(invRef, { stock: curr - 0});
+      });
+
+      // update local UI immediately
+      setAllPlants(ps =>
+        ps.map(p => (p.id === plant.id ? { ...p, stock: p.stock - 1 } : p))
+      );
+
       alert(`Added “${plant.name}” to cart.`);
     } catch (err) {
       console.error(err);
-      alert("Couldn’t add to cart.");
+      alert(err.message || "Couldn't add to cart.");
     }
   };
 
-  // Page navigation
+  // page navigation
   const handlePageChange = newPage => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
@@ -74,16 +99,15 @@ const Vendor = () => {
     <div className="min-h-screen bg-[#faf6e9] flex flex-col">
       {/* Hero Section */}
       <section className="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-0 py-8">
-        {/* Text Column */}
-        <div className="bg-[#607b64] text-white p-6 flex flex-col justify-center h-80 square-lg">
+        <div className="bg-[#607b64] text-white p-6 flex flex-col justify-center h-80">
           <h1 className="text-3xl font-bold mb-2">WELCOME TO PLANTY</h1>
           <p className="text-lg mb-2">Plants for every occasion</p>
           <p className="text-base leading-relaxed">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua.
           </p>
         </div>
-        {/* Image Column */}
-        <div className="bg-[#faf6e9] p-6 flex justify-center items-center h-80 rounded-lg ">
+        <div className="bg-[#faf6e9] p-6 flex justify-center items-center h-80 rounded-lg">
           <img
             src={HeroImage}
             alt="Featured plant"
@@ -94,7 +118,6 @@ const Vendor = () => {
 
       {/* Main Content */}
       <main className="flex-1">
-        {/* Top Products Heading */}
         <div className="text-center mt-8">
           <h2 className="text-3xl font-semibold">Top Products</h2>
         </div>
@@ -112,15 +135,12 @@ const Vendor = () => {
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
-            <button
-              type="button"
-              className="btn bg-[#02542d] text-white px-6"
-            >
+            <button type="button" className="btn bg-[#02542d] text-white px-6">
               Search
             </button>
           </form>
 
-          {/* Plants Grid */}
+          {/* Products Grid */}
           {loading ? (
             <LoaderPlant />
           ) : (
@@ -135,13 +155,30 @@ const Vendor = () => {
                     alt={p.name}
                     className="w-full h-40 object-cover rounded-lg mb-3"
                   />
-                  <h3 className="text-lg font-semibold text-[#2c5c2c]">{p.name}</h3>
-                  <p className="text-sm text-gray-600 mb-4">৳{p.price}</p>
+                  <h3 className="text-lg font-semibold text-[#2c5c2c]">
+                    {p.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-1">৳{p.price}</p>
+
+                  {/* In stock / Out of stock label */}
+                  <p
+                    className={`text-sm mb-4 ${
+                      p.stock > 0 ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
+                    {p.stock > 0 ? 'In stock' : 'Out of stock'}
+                  </p>
+
                   <button
                     onClick={() => handleAddToCart(p)}
-                    className="mt-auto btn bg-[#607b64] text-white"
+                    disabled={p.stock <= 0}
+                    className={`mt-auto btn text-white ${
+                      p.stock > 0
+                        ? 'bg-[#607b64] hover:bg-[#4a6450]'
+                        : 'bg-gray-400 cursor-not-allowed'
+                    }`}
                   >
-                    Add to cart
+                    {p.stock > 0 ? 'Add to cart' : 'Out of stock'}
                   </button>
                 </div>
               ))}
