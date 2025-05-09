@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
-import { FaUser, FaMapMarkerAlt, FaClipboardList, FaBox, FaTruck } from "react-icons/fa";
+import { FaUser, FaMapMarkerAlt } from "react-icons/fa";
 import { ProfileHeader } from "./CommonComponents";
 
 const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDisplayName, handleUpdatePassword, newPassword, setNewPassword, confirmPassword, setConfirmPassword }) => {
@@ -15,11 +15,6 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
     });
     const [originalAddress, setOriginalAddress] = useState(null);
     const [isEditingAddress, setIsEditingAddress] = useState(false);
-    const [stats, setStats] = useState({
-        totalMaterials: 0,
-        lowStock: 0,
-        outOfStock: 0
-    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,12 +56,6 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                     setAddress(userData.address);
                     setOriginalAddress(userData.address);
                 }
-
-                // Fetch stats
-                const statsRef = collection(db, "stats");
-                const statsSnapshot = await getDocs(statsRef);
-                const statsData = statsSnapshot.docs[0].data();
-                setStats(statsData);
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -210,7 +199,7 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                                     <p className="text-sm text-gray-600">Buyer: {order.buyerName}</p>
                                     <p className="text-sm text-gray-600">Name: {order.name}</p>
                                     <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
-                                    <p className="text-sm text-gray-600">Price: ${order.totalAmount.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600">Price: ${(order.totalAmount / order.quantity).toFixed(2)}</p>
                                     <p className="text-sm font-medium text-gray-600">Total Amount: ${order.totalAmount.toFixed(2)}</p>
                                 </div>
                             </div>
@@ -219,37 +208,6 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                 ) : (
                     <p className="text-gray-600">No orders yet</p>
                 )}
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#FAF6E9] p-6 rounded-lg border border-[#C8C0C0]">
-                    <div className="flex items-center">
-                        <FaBox className="h-8 w-8 text-[#3a5a40]" />
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Total Materials</p>
-                            <p className="text-2xl font-semibold text-[#02542d]">{stats.totalMaterials}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-[#FAF6E9] p-6 rounded-lg border border-[#C8C0C0]">
-                    <div className="flex items-center">
-                        <FaBox className="h-8 w-8 text-[#3a5a40]" />
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Low Stock</p>
-                            <p className="text-2xl font-semibold text-[#02542d]">{stats.lowStock}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-[#FAF6E9] p-6 rounded-lg border border-[#C8C0C0]">
-                    <div className="flex items-center">
-                        <FaTruck className="h-8 w-8 text-[#3a5a40]" />
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Out of Stock</p>
-                            <p className="text-2xl font-semibold text-[#02542d]">{stats.outOfStock}</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
