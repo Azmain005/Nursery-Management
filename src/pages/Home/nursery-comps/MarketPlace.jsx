@@ -21,10 +21,9 @@ import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
-  Cell,
   Legend,
-  Pie,
-  PieChart,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -47,7 +46,7 @@ const MarketPlace = () => {
     primary: "#3e5931",
     text: "#02542d",
     accent: "#6a994e",
-    lightAccent: "#a7c957",
+    lightAccent: "#9bab9a",
     chartColors: ["#3e5931", "#6a994e", "#a7c957", "#87b37a", "#c5d86d"],
   };
 
@@ -432,7 +431,7 @@ const MarketPlace = () => {
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen max-w-6xl mx-auto"
       style={{ backgroundColor: colors.background, color: colors.text }}
     >
       <div className="container mx-auto px-4 py-8">
@@ -645,7 +644,7 @@ const MarketPlace = () => {
         )}
 
         {activeTab === "analytics" && salesData && (
-          <div>
+          <div className="max-w-6xl mx-auto">
             <h2
               className="text-2xl font-semibold mb-6"
               style={{ color: colors.primary }}
@@ -654,44 +653,47 @@ const MarketPlace = () => {
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Product Sales Chart */}
+              {/* Product Sales Chart - Changed from Pie to Line */}
               <div className="bg-[#fefaef] p-6 rounded-lg shadow-md">
                 <h3
                   className="text-lg font-medium mb-4"
                   style={{ color: colors.primary }}
                 >
-                  Product Sales Distribution
+                  Product Sales Trend
                 </h3>
                 <div className="h-64">
                   {salesData.productSales.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={salesData.productSales}
-                          dataKey="sold"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={60}
-                          label={(entry) => entry.name}
-                        >
-                          {salesData.productSales.map((entry, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={
-                                colors.chartColors[
-                                  index % colors.chartColors.length
-                                ]
-                              }
+                    <div style={{ width: "100%", overflowX: "auto" }}>
+                      <div
+                        style={{
+                          minWidth: Math.max(
+                            500,
+                            salesData.productSales.length * 100
+                          ),
+                        }}
+                      >
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart
+                            data={salesData.productSales}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip
+                              formatter={(value) => [`${value} units`, "Sold"]}
                             />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          formatter={(value) => [`${value} units`, "Sold"]}
-                        />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="sold"
+                              stroke={colors.primary}
+                              name="Units Sold"
+                              activeDot={{ r: 8 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                   ) : (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-gray-500">
