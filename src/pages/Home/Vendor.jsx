@@ -16,7 +16,7 @@ const Vendor = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 1) Fetch inventory including stock
+  // Fetch inventory including stock
   useEffect(() => {
     async function fetchPlants() {
       setLoading(true);
@@ -60,7 +60,7 @@ const Vendor = () => {
     return filteredPlants.slice(start, start + plantsPerPage);
   }, [filteredPlants, currentPage]);
 
-  // 2) Add to cart + decrement stock via transaction
+  // Add to cart + decrement stock via transaction
   const handleAddToCart = async (plant) => {
     try {
       // add to cart (via context)
@@ -82,7 +82,7 @@ const Vendor = () => {
         ps.map((p) => (p.id === plant.id ? { ...p, stock: p.stock - 1 } : p))
       );
 
-      alert(`Added "${plant.name}" to cart.`);
+      //alert(`Added "${plant.name}" to cart.`);
     } catch (err) {
       console.error(err);
       alert(err.message || "Couldn't add to cart.");
@@ -105,15 +105,13 @@ const Vendor = () => {
               WELCOME TO PLANTY
             </h1>
             <p className="text-xl mb-6">Plants for every occasion</p>
-            <div className="w-24 h-0.5 bg-[#fefaef] mb-8"></div>
-            <p className="text-base leading-relaxed opacity-90 max-w-lg">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
+            <div className="w-25 h-0.5 bg-[#fefaef] mb-8"></div>
+            <p className="text-base leading-relaxed opacity-90 max-w-lg" style={{ textAlign: 'justify' }}>
+              Discover a diverse range of flourishing plants, carefully nurtured and ready for their new homes in your nursery
+              or garden center. We offer a wide variety, from vibrant flowering annuals and hardy perennials to lush shrubs
+              and elegant trees. Enhance your offerings with our exceptional selection of plants, cultivated with care and
+              ready to impress your customers. We understand the importance of quality and reliability, and we're dedicated
+              to providing you with healthy, vigorous plants that will thrive.
             </p>
           </div>
           <div className="bg-[#faf6e9] flex justify-center items-center min-h-[500px]">
