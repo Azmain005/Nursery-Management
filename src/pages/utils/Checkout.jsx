@@ -78,9 +78,9 @@ const Checkout = () => {
       <main className="flex-1 p-6">
         <h1 className="text-2xl font-semibold text-[#2c5c2c] mb-6">Checkout</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/*   …your Step 1–3 JSX remains unchanged…   */}
+          
 
-          {/* Step 4: Order Overview */}
+          {/* Order Overview */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="flex items-center text-lg font-bold text-[#607b64] mb-4">
               <span className="inline-flex items-center justify-center w-6 h-6 mr-2 bg-[#02542d] text-white rounded-full">
