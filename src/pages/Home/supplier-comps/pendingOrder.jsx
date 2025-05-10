@@ -211,63 +211,52 @@ const PendingOrder = () => {
 
   const handleConfirmOrder = async (order) => {
     try {
-      const batch = writeBatch(db);
+      // Get the original order document to access the document-level workerId
+      const orderDocRef = doc(db, "nursery_orders", order.id);
+      const orderDocSnap = await getDoc(orderDocRef);
       
-      // Use a new collection: 'supplier_confirmed_orders'
-      // This collection will store all confirmed orders with complete tracking data
+      if (!orderDocSnap.exists()) {
+        alert("Order document not found!");
+        return;
+      }
+      
+      const orderData = orderDocSnap.data();
+      
+      // Extract workerId from the document level
+      const documentWorkerId = orderData.workerId || "";
+      
+      // Create a new document in supplier_confirmed_orders
       await addDoc(collection(db, "supplier_confirmed_orders"), {
-        // Material information
         materialInfo: {
           name: order.name,
           price: order.price,
           quantity: order.quantity,
-          image: order.image || "https://via.placeholder.com/150",
-          description: order.description || "",
-          materialId: order.itemId || "",
+          image: order.image || "",
+          materialId: order.itemId || ""
         },
-        
-        // Supplier information
         supplierInfo: {
           supplierId: user.uid,
-          supplierName: order.supplierName || user.displayName || "",
-          supplierEmail: user.email || "",
+          supplierName: user.displayName || ""
         },
-        
-        // Worker information
         workerInfo: {
-          workerId: order.workerId || "",
-          workerName: order.workerName || "Unknown Worker",
-          workerAddress: order.workerAddress || "",
+          // Use the document-level workerId
+          workerId: documentWorkerId,
+          // Include the worker name
+          workerName: order.workerName || "Unknown Worker"
         },
-        
-        // Order metadata
-        orderInfo: {
-          originalOrderId: order.id,
-          orderDate: order.addedAt || serverTimestamp(),
-          confirmationDate: serverTimestamp(),
-          status: "confirmed",
-          total: order.subtotal || (order.price * order.quantity),
-        }
+        status: "confirmed",
+        createdAt: serverTimestamp()
       });
       
-      // 2. Get the order document to update items array
-      const orderDocRef = doc(db, "nursery_orders", order.id);
-      const orderDoc = await getDoc(orderDocRef);
+      // Update the original order document
+      const batch = writeBatch(db);
+      const items = orderData.items || [];
+      const updatedItems = items.filter(item => item.id !== order.itemId);
       
-      if (orderDoc.exists()) {
-        const orderData = orderDoc.data();
-        const items = orderData.items || [];
-        
-        // Filter out the confirmed item
-        const updatedItems = items.filter(item => item.id !== order.itemId);
-        
-        if (updatedItems.length === 0) {
-          // If no items left, delete the whole document
-          batch.delete(orderDocRef);
-        } else {
-          // Update the document with the remaining items
-          batch.update(orderDocRef, { items: updatedItems });
-        }
+      if (updatedItems.length === 0) {
+        batch.delete(orderDocRef);
+      } else {
+        batch.update(orderDocRef, { items: updatedItems });
       }
       
       await batch.commit();
@@ -277,10 +266,10 @@ const PendingOrder = () => {
       setTotalOrderValue(prev => prev - order.subtotal);
       setCompletedOrdersCount(prev => prev + 1);
       
-      alert(`Order from ${order.workerName} has been confirmed!`);
+      alert(`Order confirmed successfully!`);
     } catch (error) {
       console.error("Error confirming order:", error);
-      alert("Failed to confirm order. Please try again.");
+      alert(`Failed to confirm order: ${error.message}`);
     }
   };
 
