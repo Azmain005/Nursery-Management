@@ -105,7 +105,7 @@ const Vendor = () => {
               WELCOME TO PLANTY
             </h1>
             <p className="text-xl mb-6">Plants for every occasion</p>
-            <div className="w-24 h-0.5 bg-white mb-8"></div>
+            <div className="w-24 h-0.5 bg-[#fefaef] mb-8"></div>
             <p className="text-base leading-relaxed opacity-90 max-w-lg">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
               eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
@@ -141,7 +141,7 @@ const Vendor = () => {
             <input
               type="text"
               placeholder="Search plant by name…"
-              className="flex-1 py-3 px-5 bg-white border border-gray-200 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-[#607b64] transition-all"
+              className="flex-1 py-3 px-5 bg-[#fefaef] border border-gray-200 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-[#607b64] transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -164,7 +164,7 @@ const Vendor = () => {
             {currentPlants.map((p) => (
               <div
                 key={p.id}
-                className="border border-gray-100 p-5 rounded-2xl shadow-md bg-white flex flex-col hover:shadow-lg transition-shadow duration-300"
+                className="border border-gray-100 p-5 rounded-2xl shadow-md bg-[#fefaef] flex flex-col hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="mb-4 overflow-hidden rounded-xl">
                   <img
