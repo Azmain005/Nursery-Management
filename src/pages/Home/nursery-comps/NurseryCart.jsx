@@ -2,20 +2,18 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   updateDoc,
-  runTransaction,
-  getDoc,
 } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
+import { FaTrash } from "react-icons/fa";
+import { NavLink, useNavigate } from "react-router-dom";
 import { db } from "../../../Auth/firebase.init";
 import EmptyCartImage from "../../../assets/empty-cart.png";
-import { useNurseryCart } from "./NurseryCartProvider";
-import { useNavigate, NavLink } from "react-router-dom";
-import { IoMdClose } from "react-icons/io";
-import { FaTrash } from "react-icons/fa";
 import Loader from "../../../components/Loader/Loader";
 import { AuthContext } from "../../../providers/AuthProvider";
+import { useNurseryCart } from "./NurseryCartProvider";
 
 const NurseryCart = () => {
   const { user } = useContext(AuthContext);
@@ -60,19 +58,19 @@ const NurseryCart = () => {
   const handleQtyChange = async (id, delta) => {
     const maxQty = maxQuantities[id] || 1;
     const newQty = Math.min(maxQty, Math.max(1, (quantities[id] || 1) + delta));
-    
-    setQuantities(prev => ({
+
+    setQuantities((prev) => ({
       ...prev,
       [id]: newQty,
     }));
-    
+
     try {
       const itemRef = doc(db, "nursery_cart", id);
       await updateDoc(itemRef, { quantity: newQty });
-      
+
       // Update local state
-      setLocalCartItems(prevItems => 
-        prevItems.map(item => 
+      setLocalCartItems((prevItems) =>
+        prevItems.map((item) =>
           item.id === id ? { ...item, quantity: newQty } : item
         )
       );
@@ -86,12 +84,12 @@ const NurseryCart = () => {
     // Parse input value to number, default to 1 if NaN
     let numValue = parseInt(value, 10);
     if (isNaN(numValue)) numValue = 1;
-    
+
     // Ensure value is within valid range (1 to max)
     const maxQty = maxQuantities[id] || 1;
     numValue = Math.min(maxQty, Math.max(1, numValue));
-    
-    setQuantities(prev => ({
+
+    setQuantities((prev) => ({
       ...prev,
       [id]: numValue,
     }));
@@ -99,14 +97,14 @@ const NurseryCart = () => {
 
   const handleQtyInputBlur = async (id) => {
     const newQty = quantities[id] || 1;
-    
+
     try {
       const itemRef = doc(db, "nursery_cart", id);
       await updateDoc(itemRef, { quantity: newQty });
-      
+
       // Update local state
-      setLocalCartItems(prevItems => 
-        prevItems.map(item => 
+      setLocalCartItems((prevItems) =>
+        prevItems.map((item) =>
           item.id === id ? { ...item, quantity: newQty } : item
         )
       );
@@ -120,10 +118,11 @@ const NurseryCart = () => {
     try {
       // Only delete from nursery_cart collection without affecting Material_for_sell
       await deleteDoc(doc(db, "nursery_cart", itemId));
-      
+
       // Update local state
-      setLocalCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
-      
+      setLocalCartItems((prevItems) =>
+        prevItems.filter((item) => item.id !== itemId)
+      );
     } catch (error) {
       console.error("Error removing item from cart:", error);
       alert("Failed to remove item from cart. Please try again.");
@@ -143,33 +142,35 @@ const NurseryCart = () => {
       for (const cartItem of localCartItems) {
         const matRef = doc(db, "Material_for_sell", cartItem.materialId);
         const matSnap = await getDoc(matRef);
-        
+
         if (!matSnap.exists()) {
-          throw new Error(`Material "${cartItem.name}" is no longer available.`);
+          throw new Error(
+            `Material "${cartItem.name}" is no longer available.`
+          );
         }
-        
+
         const currentStock = matSnap.data()?.quantity ?? 0;
         const selectedQuantity = quantities[cartItem.id] || 1;
-        
+
         if (currentStock < selectedQuantity) {
           throw new Error(
             `Not enough stock for "${cartItem.name}". Only ${currentStock} left.`
           );
         }
       }
-      
+
       // Create a new array with updated quantities for checkout
-      const checkoutItems = localCartItems.map(item => {
+      const checkoutItems = localCartItems.map((item) => {
         // Create a new object to avoid modifying the original item
         return {
           ...item,
-          quantity: quantities[item.id] || 1 // Use the selected quantity (defaulting to 1)
+          quantity: quantities[item.id] || 1, // Use the selected quantity (defaulting to 1)
         };
       });
-      
+
       // Store MODIFIED cart items in session storage for checkout
-      sessionStorage.setItem('nurseryCartItems', JSON.stringify(checkoutItems));
-      
+      sessionStorage.setItem("nurseryCartItems", JSON.stringify(checkoutItems));
+
       // Navigate to checkout
       navigate("/nurserycheckout");
     } catch (err) {
@@ -198,7 +199,10 @@ const NurseryCart = () => {
             <p className="text-lg text-gray-600 mb-4">
               Your nursery cart is empty!
             </p>
-            <NavLink to="/nurseryWorker/order-raw-material" className="btn bg-[#02542d] text-white">
+            <NavLink
+              to="/nurseryWorker/order-raw-material"
+              className="btn bg-[#02542d] text-white"
+            >
               Order Material
             </NavLink>
           </div>
@@ -216,7 +220,10 @@ const NurseryCart = () => {
                   <th className="p-2 text-center">Remove</th>
                 </tr>
                 <tr>
-                  <td colSpan={7} style={{ height: '2px', background: '#02542d', padding: 0 }}></td>
+                  <td
+                    colSpan={7}
+                    style={{ height: "2px", background: "#02542d", padding: 0 }}
+                  ></td>
                 </tr>
               </thead>
               <tbody>
@@ -244,7 +251,9 @@ const NurseryCart = () => {
                             min="1"
                             max={maxQuantities[item.id] || 1}
                             value={quantities[item.id] || 1}
-                            onChange={(e) => handleQtyInputChange(item.id, e.target.value)}
+                            onChange={(e) =>
+                              handleQtyInputChange(item.id, e.target.value)
+                            }
                             onBlur={() => handleQtyInputBlur(item.id)}
                             className="w-16 text-center border-2 border-[#607b64] rounded bg-[#faf6e9] p-1 focus:outline-none focus:border-[#3e5931]"
                           />
@@ -259,11 +268,15 @@ const NurseryCart = () => {
                           Available: {maxQuantities[item.id] || 1}
                         </div>
                       </td>
-                      <td className="p-2 text-[#2c5c2c] font-bold">৳{item.price}</td>
                       <td className="p-2 text-[#2c5c2c] font-bold">
-                        ৳{item.price * (quantities[item.id] || 1)}
+                        ${item.price}
                       </td>
-                      <td className="p-2 text-[#2c5c2c]">{item.supplierName || "Unknown Supplier"}</td>
+                      <td className="p-2 text-[#2c5c2c] font-bold">
+                        ${item.price * (quantities[item.id] || 1)}
+                      </td>
+                      <td className="p-2 text-[#2c5c2c]">
+                        {item.supplierName || "Unknown Supplier"}
+                      </td>
                       <td className="p-2 text-center">
                         <button
                           onClick={() => handleRemoveFromCart(item.id)}
@@ -274,8 +287,15 @@ const NurseryCart = () => {
                         </button>
                       </td>
                     </tr>
-                    <tr key={`sep-${item.id}`}> 
-                      <td colSpan={7} style={{ height: '2px', background: '#02542d', padding: 0 }}></td>
+                    <tr key={`sep-${item.id}`}>
+                      <td
+                        colSpan={7}
+                        style={{
+                          height: "2px",
+                          background: "#02542d",
+                          padding: 0,
+                        }}
+                      ></td>
                     </tr>
                   </>
                 ))}
@@ -285,16 +305,19 @@ const NurseryCart = () => {
               <div className="bg-[#607b64] text-white p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
                   <span>Sub-Total:</span>
-                  <span>৳{calculateTotal()}</span>
+                  <span>${calculateTotal()}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>৳{calculateTotal()}</span>
+                  <span>${calculateTotal()}</span>
                 </div>
               </div>
             </div>
             <div className="mt-6 flex justify-between">
-              <NavLink to="/nurseryWorker/order-raw-material" className="btn bg-[#02542d] text-white">
+              <NavLink
+                to="/nurseryWorker/order-raw-material"
+                className="btn bg-[#02542d] text-white"
+              >
                 Order More
               </NavLink>
               <button
