@@ -176,21 +176,21 @@ const Maintenance = () => {
             {currentMaterials.map((material) => (
               <div
                 key={material.id}
-                className="border p-4 rounded-lg shadow-md bg-[#607b64] text-white flex flex-col"
+                className="border p-4 rounded-lg shadow-md bg-[#faf6e9] text-[#2c5c2c] flex flex-col"
               >
                 <img
                   src={material.image || "https://via.placeholder.com/150"}
                   alt={material.name}
                   className="w-full h-40 object-cover rounded-lg mb-3"
                 />
-                <h3 className="text-lg font-semibold text-white mb-1">
+                <h3 className="text-lg font-semibold text-[#2c5c2c] mb-1">
                   {material.name}
                 </h3>
-                <p className="text-sm text-white mb-1">${material.price}</p>
-                <p className="text-sm text-white mb-4">Supplier: {supplierNames[material.supplierId] || "Unknown Supplier"}</p>
+                <p className="text-sm text-[#2c5c2c] mb-1">${material.price}</p>
+                <p className="text-sm text-[#2c5c2c] mb-4">Supplier: {supplierNames[material.supplierId] || "Unknown Supplier"}</p>
                 <button
                   onClick={() => handleAddToCart(material)}
-                  className="mt-auto bg-[#faf6e9] text-[#607b64] font-semibold py-2 px-4 rounded flex items-center justify-center gap-2"
+                  className="mt-auto bg-[#607b64] text-white font-semibold py-2 px-4 rounded flex items-center justify-center gap-2"
                 >
                   Add to cart
                 </button>

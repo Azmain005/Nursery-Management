@@ -62,8 +62,7 @@ const RawMaterial = () => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
     const filtered = materials.filter((material) =>
-      material.materialInfo?.name?.toLowerCase().includes(term) || 
-      material.supplierInfo?.supplierName?.toLowerCase().includes(term)
+      material.materialInfo?.name?.toLowerCase().includes(term)
     );
     setFilteredMaterials(filtered);
     setCurrentPage(1); // Reset to the first page after search
