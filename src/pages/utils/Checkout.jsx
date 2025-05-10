@@ -1,8 +1,5 @@
 // src/pages/utils/Checkout.jsx
-import {
-  addDoc,
-  collection
-} from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { useContext, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { db } from "../../Auth/firebase.init";
@@ -10,11 +7,11 @@ import { AuthContext } from "../../providers/AuthProvider";
 import { useCart } from "../../providers/CartProvider";
 
 const Checkout = () => {
-  const { user }      = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { clearCart } = useCart();
-  const { state }     = useLocation();
-  const cartItems     = state?.cartItems || [];
-  const navigate      = useNavigate();
+  const { state } = useLocation();
+  const cartItems = state?.cartItems || [];
+  const navigate = useNavigate();
 
   // form state for customer fields
   const [form, setForm] = useState({
@@ -36,51 +33,30 @@ const Checkout = () => {
   // compute your totals
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const deliveryCharge =
-    form.delivery === "home" ? 60 :
-    form.delivery === "store" ? 0 :
-    150;
+    form.delivery === "home" ? 60 : form.delivery === "store" ? 0 : 150;
   const total = subtotal + deliveryCharge;
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(f => ({
+    setForm((f) => ({
       ...f,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // shape the order exactly as you described
       const orderData = {
         userId: user.uid,
-        // createdAt: serverTimestamp(),
-        // customer: {
-        //   firstName: form.firstName,
-        //   lastName:  form.lastName,
-        //   address:   form.address,
-        //   mobile:    form.mobile,
-        //   email:     form.email,
-        //   city:      form.city,
-        //   zone:      form.zone,
-        //   comment:   form.comment,
-        // },
-        // paymentMethod:  form.payment,
-        // deliveryMethod: form.delivery,
-        // voucher:        form.voucher || null,
-        // coupon:         form.coupon  || null,
-        items: cartItems.map(i => ({
-          plantId:    i.plantId,
-          image:      i.image,
-          name:       i.name,
-          quantity:   i.quantity,
-          unitPrice:  i.price,
-          totalPrice: i.price * i.quantity
-        }))
-        // subtotal,
-        // deliveryCharge,
-        // total,
+        items: cartItems.map((i) => ({
+          plantId: i.plantId,
+          image: i.image,
+          name: i.name,
+          quantity: i.quantity,
+          unitPrice: i.price,
+          totalPrice: i.price * i.quantity,
+        })),
       };
 
       // write to Firestore
@@ -100,9 +76,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-[#faf6e9] flex flex-col">
       <main className="flex-1 p-6">
-        <h1 className="text-2xl font-semibold text-[#2c5c2c] mb-6">
-          Checkout
-        </h1>
+        <h1 className="text-2xl font-semibold text-[#2c5c2c] mb-6">Checkout</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/*   …your Step 1–3 JSX remains unchanged…   */}
 
@@ -123,10 +97,12 @@ const Checkout = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map(i => (
+                {cartItems.map((i) => (
                   <tr key={i.id}>
                     <td className="p-2">{i.name}</td>
-                    <td className="p-2">৳{i.price} × {i.quantity}</td>
+                    <td className="p-2">
+                      ৳{i.price} × {i.quantity}
+                    </td>
                     <td className="p-2">৳{i.price * i.quantity}</td>
                   </tr>
                 ))}

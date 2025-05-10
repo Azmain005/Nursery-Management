@@ -1,14 +1,14 @@
-import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../../providers/AuthProvider";
 import {
   collection,
-  getDocs,
   deleteDoc,
   doc,
+  getDocs,
   updateDoc,
 } from "firebase/firestore";
+import { useContext, useEffect, useState } from "react";
 import { db } from "../../../Auth/firebase.init";
 import EmptyCartImage from "../../../assets/empty-cart.png";
+import { AuthContext } from "../../../providers/AuthProvider";
 
 const NurseryCart = () => {
   const { user } = useContext(AuthContext);
