@@ -68,6 +68,7 @@ const AuthProvider = ({ children }) => {
       await setDoc(doc(db, "user_data", user.uid), {
         email: user.email,
         role: "Vendor",
+        displayName: user.displayName,
       });
     } catch (error) {
       console.error("Error adding user to database:", error);
