@@ -1,7 +1,4 @@
-import {
-  doc,
-  updateDoc
-} from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 import { IoIosArrowForward, IoIosSearch } from "react-icons/io";
 import { db } from "../../../Auth/firebase.init";

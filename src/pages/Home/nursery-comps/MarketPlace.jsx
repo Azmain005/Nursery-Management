@@ -16,8 +16,7 @@ import {
   TrendingUp,
   User,
   X,
-} 
-from "lucide-react";
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Bar,
@@ -59,12 +58,12 @@ const MarketPlace = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch cart data (orders)
-        const cartCollection = collection(db, "cart");
-        const cartSnapshot = await getDocs(cartCollection);
+        // Fetch from ordered collection
+        const orderedCollection = collection(db, "ordered");
+        const orderedSnapshot = await getDocs(orderedCollection);
 
         // Early exit if there are no orders
-        if (cartSnapshot.empty) {
+        if (orderedSnapshot.empty) {
           setOrders([]);
           setTotalOrderValue(0);
           await fetchSalesData();
@@ -72,25 +71,30 @@ const MarketPlace = () => {
           return;
         }
 
-        // Process cart data and fetch related user data
-        const ordersPromises = cartSnapshot.docs.map(async (cartDoc) => {
+        // Process ordered data and fetch related user data
+        const ordersPromises = orderedSnapshot.docs.map(async (orderDoc) => {
           try {
-            const cartData = cartDoc.data();
+            const orderData = orderDoc.data();
 
             // Skip invalid entries
-            if (!cartData || !cartData.userId) {
-              console.warn("Skipping invalid cart entry:", cartDoc.id);
+            if (
+              !orderData ||
+              !orderData.userId ||
+              !orderData.items ||
+              !orderData.items.length
+            ) {
+              console.warn("Skipping invalid order entry:", orderDoc.id);
               return null;
             }
 
-            // Fetch user data using userId from cart
-            const userDocRef = doc(db, "user_data", cartData.userId);
+            // Fetch user data using userId from order
+            const userDocRef = doc(db, "user_data", orderData.userId);
             const userDoc = await getDoc(userDocRef);
 
             // Skip if user data doesn't exist
             if (!userDoc.exists()) {
               console.warn(
-                `User data not found for user ID: ${cartData.userId}`
+                `User data not found for user ID: ${orderData.userId}`
               );
               return null;
             }
@@ -105,47 +109,43 @@ const MarketPlace = () => {
                 }, ${address.country || ""}, ${address.zipCode || ""}`
               : "Address not available";
 
-            // Safety check for product data
-            if (
-              !cartData.plantId ||
-              !cartData.name ||
-              !cartData.quantity ||
-              !cartData.price
-            ) {
-              console.warn(
-                `Incomplete product data for cart ID: ${cartDoc.id}`
-              );
-              return null;
-            }
+            // Process each item in the order
+            const products = orderData.items.map((item) => {
+              const price =
+                typeof item.unitPrice === "string"
+                  ? parseFloat(item.unitPrice)
+                  : typeof item.unitPrice === "number"
+                  ? item.unitPrice
+                  : 0;
 
-            const price =
-              typeof cartData.price === "string"
-                ? parseFloat(cartData.price)
-                : typeof cartData.price === "number"
-                ? cartData.price
-                : 0;
+              return {
+                id: item.plantId || item.productId || "unknown",
+                name: item.name || "Unknown Product",
+                quantity: Number(item.quantity) || 1,
+                price: price,
+                image: item.image || null,
+              };
+            });
+
+            // Calculate total amount for the order
+            const totalAmount = products.reduce(
+              (sum, product) => sum + product.price * product.quantity,
+              0
+            );
 
             return {
-              id: cartDoc.id,
-              userId: cartData.userId,
+              id: orderDoc.id,
+              userId: orderData.userId,
               customerName: userData.displayName || "Unknown Customer",
               email: userData.email || "No Email",
               address: formattedAddress,
-              products: [
-                {
-                  id: cartData.plantId || "unknown",
-                  name: cartData.name || "Unknown Product",
-                  quantity: Number(cartData.quantity) || 1,
-                  price: price,
-                  image: cartData.image || null,
-                },
-              ],
-              totalAmount: price * (Number(cartData.quantity) || 1),
+              products: products,
+              totalAmount: totalAmount,
               status: "pending",
-              timestamp: cartData.timestamp || null,
+              timestamp: orderData.timestamp || null,
             };
           } catch (err) {
-            console.error(`Error processing order ${cartDoc.id}:`, err);
+            console.error(`Error processing order ${orderDoc.id}:`, err);
             return null;
           }
         });
@@ -185,16 +185,16 @@ const MarketPlace = () => {
 
     loadData();
 
-    // Set up a real-time listener for changes to the cart collection
-    const cartCollection = collection(db, "cart");
+    // Set up a real-time listener for changes to the ordered collection
+    const orderedCollection = collection(db, "ordered");
     const unsubscribe = onSnapshot(
-      cartCollection,
+      orderedCollection,
       (snapshot) => {
-        // If any changes occur to the cart collection, reload data
+        // If any changes occur to the ordered collection, reload data
         loadData();
       },
       (err) => {
-        console.error("Error in cart snapshot listener:", err);
+        console.error("Error in ordered snapshot listener:", err);
         setError(
           "Failed to listen for order updates. Please refresh the page."
         );
@@ -257,11 +257,27 @@ const MarketPlace = () => {
     try {
       const batch = writeBatch(db);
 
-      // Remove the order from the cart collection
-      const cartRef = doc(db, "cart", order.id);
-      batch.delete(cartRef);
+      // Add the order to the confirmed collection
+      const confirmedRef = doc(db, "confirmed", order.id);
+      batch.set(confirmedRef, {
+        userId: order.userId,
+        items: order.products.map((product) => ({
+          productId: product.id,
+          name: product.name,
+          quantity: product.quantity,
+          unitPrice: product.price,
+          image: product.image,
+        })),
+        totalAmount: order.totalAmount,
+        customerName: order.customerName,
+        email: order.email,
+        address: order.address,
+        status: "confirmed",
+        confirmedAt: serverTimestamp(),
+        originalOrderId: order.id,
+      });
 
-      // Update the sales_summary document (create if it doesn't exist)
+      // Update sales summary
       const salesSummaryRef = doc(db, "sales_summary", "statistics");
       const salesSummaryDoc = await getDoc(salesSummaryRef);
 
@@ -279,52 +295,52 @@ const MarketPlace = () => {
         });
       }
 
-      // Update product sales for the product in the order
-      const product = order.products[0]; // Since we have single product per cart item
-      if (product && product.id) {
-        const productSalesRef = doc(db, "product_sales", product.id);
-        const productDoc = await getDoc(productSalesRef);
+      // Update product sales for each product in the order
+      for (const product of order.products) {
+        if (product.id) {
+          const productSalesRef = doc(db, "product_sales", product.id);
+          const productDoc = await getDoc(productSalesRef);
 
-        if (productDoc.exists()) {
-          // Update existing product sales record
-          batch.update(productSalesRef, {
-            quantitySold: increment(product.quantity),
-            revenue: increment(product.price * product.quantity),
-            lastUpdated: serverTimestamp(),
-          });
-        } else {
-          // Create new product sales record
-          batch.set(productSalesRef, {
-            name: product.name,
-            quantitySold: product.quantity,
-            revenue: product.price * product.quantity,
-            lastUpdated: serverTimestamp(),
-          });
-        }
+          if (productDoc.exists()) {
+            batch.update(productSalesRef, {
+              quantitySold: increment(product.quantity),
+              revenue: increment(product.price * product.quantity),
+              lastUpdated: serverTimestamp(),
+            });
+          } else {
+            batch.set(productSalesRef, {
+              name: product.name,
+              quantitySold: product.quantity,
+              revenue: product.price * product.quantity,
+              lastUpdated: serverTimestamp(),
+            });
+          }
 
-        // Add product to inventory if needed
-        const inventoryRef = doc(db, "inventory", product.id);
-        const inventoryDoc = await getDoc(inventoryRef);
+          // Update inventory
+          const inventoryRef = doc(db, "inventory", product.id);
+          const inventoryDoc = await getDoc(inventoryRef);
 
-        if (!inventoryDoc.exists()) {
-          batch.set(inventoryRef, {
-            name: product.name,
-            quantity: 0,
-            price: product.price,
-            image: product.image,
-            lastUpdated: serverTimestamp(),
-          });
+          if (!inventoryDoc.exists()) {
+            batch.set(inventoryRef, {
+              name: product.name,
+              quantity: 0,
+              price: product.price,
+              image: product.image,
+              lastUpdated: serverTimestamp(),
+            });
+          }
         }
       }
 
-      // Commit all the batch operations
+      // Remove from ordered collection
+      const orderedRef = doc(db, "ordered", order.id);
+      batch.delete(orderedRef);
+
       await batch.commit();
 
       // Update local state
       setOrders(orders.filter((o) => o.id !== order.id));
       setTotalOrderValue((prev) => prev - order.totalAmount);
-
-      // Refresh sales data
       await fetchSalesData();
 
       alert(`Order from ${order.customerName} has been confirmed!`);
@@ -339,32 +355,32 @@ const MarketPlace = () => {
       const batch = writeBatch(db);
 
       // Add products back to inventory
-      const product = order.products[0]; // Since we have single product per cart item
-      if (product && product.id) {
-        const inventoryRef = doc(db, "inventory", product.id);
-        const inventoryDoc = await getDoc(inventoryRef);
+      for (const product of order.products) {
+        if (product.id) {
+          const inventoryRef = doc(db, "inventory", product.id);
+          const inventoryDoc = await getDoc(inventoryRef);
 
-        if (inventoryDoc.exists()) {
-          batch.update(inventoryRef, {
-            quantity: increment(product.quantity),
-            lastUpdated: serverTimestamp(),
-          });
-        } else {
-          batch.set(inventoryRef, {
-            name: product.name,
-            quantity: product.quantity,
-            price: product.price,
-            image: product.image,
-            lastUpdated: serverTimestamp(),
-          });
+          if (inventoryDoc.exists()) {
+            batch.update(inventoryRef, {
+              quantity: increment(product.quantity),
+              lastUpdated: serverTimestamp(),
+            });
+          } else {
+            batch.set(inventoryRef, {
+              name: product.name,
+              quantity: product.quantity,
+              price: product.price,
+              image: product.image,
+              lastUpdated: serverTimestamp(),
+            });
+          }
         }
       }
 
-      // Remove the order from the cart collection
-      const cartRef = doc(db, "cart", order.id);
-      batch.delete(cartRef);
+      // Remove the order from the ordered collection
+      const orderedRef = doc(db, "ordered", order.id);
+      batch.delete(orderedRef);
 
-      // Commit all the batch operations
       await batch.commit();
 
       // Update local state
@@ -385,12 +401,7 @@ const MarketPlace = () => {
   };
 
   if (loading) {
-    return (
-      // <div className="flex items-center justify-center h-screen" style={{ backgroundColor: colors.background }}>
-      //   <div className="text-xl font-semibold" style={{ color: colors.text }}>Loading...</div>
-      // </div>
-      <Loader></Loader>
-    );
+    return <Loader></Loader>;
   }
 
   if (error) {
@@ -399,7 +410,7 @@ const MarketPlace = () => {
         className="flex items-center justify-center h-screen"
         style={{ backgroundColor: colors.background }}
       >
-        <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full text-center">
+        <div className="bg-[#fefaef] p-6 rounded-lg shadow-md max-w-md w-full text-center">
           <div className="text-red-600 mb-4 text-5xl">⚠️</div>
           <h2 className="text-xl font-bold mb-4" style={{ color: colors.text }}>
             Error
@@ -434,7 +445,7 @@ const MarketPlace = () => {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6 flex items-center">
+          <div className="bg-[#fefaef] rounded-lg shadow-md p-6 flex items-center">
             <div
               className="p-3 rounded-full mr-4"
               style={{ backgroundColor: colors.lightAccent }}
@@ -447,7 +458,7 @@ const MarketPlace = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 flex items-center">
+          <div className="bg-[#fefaef] rounded-lg shadow-md p-6 flex items-center">
             <div
               className="p-3 rounded-full mr-4"
               style={{ backgroundColor: colors.lightAccent }}
@@ -464,7 +475,7 @@ const MarketPlace = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 flex items-center">
+          <div className="bg-[#fefaef] rounded-lg shadow-md p-6 flex items-center">
             <div
               className="p-3 rounded-full mr-4"
               style={{ backgroundColor: colors.lightAccent }}
@@ -479,7 +490,7 @@ const MarketPlace = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 flex items-center">
+          <div className="bg-[#fefaef] rounded-lg shadow-md p-6 flex items-center">
             <div
               className="p-3 rounded-full mr-4"
               style={{ backgroundColor: colors.lightAccent }}
@@ -539,7 +550,7 @@ const MarketPlace = () => {
                 orders.map((order) => (
                   <div
                     key={order.id}
-                    className="bg-white rounded-lg shadow-md overflow-hidden"
+                    className="bg-[#fefaef] rounded-lg shadow-md overflow-hidden"
                   >
                     <div
                       className="p-5"
@@ -644,7 +655,7 @@ const MarketPlace = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Product Sales Chart */}
-              <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="bg-[#fefaef] p-6 rounded-lg shadow-md">
                 <h3
                   className="text-lg font-medium mb-4"
                   style={{ color: colors.primary }}
@@ -661,7 +672,7 @@ const MarketPlace = () => {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          outerRadius={80}
+                          outerRadius={60}
                           label={(entry) => entry.name}
                         >
                           {salesData.productSales.map((entry, index) => (
@@ -692,7 +703,7 @@ const MarketPlace = () => {
               </div>
 
               {/* Revenue By Product Chart */}
-              <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="bg-[#fefaef] p-6 rounded-lg shadow-md">
                 <h3
                   className="text-lg font-medium mb-4"
                   style={{ color: colors.primary }}
@@ -731,7 +742,7 @@ const MarketPlace = () => {
               </div>
 
               {/* Best Selling Products Table */}
-              <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-2">
+              <div className="bg-[#fefaef] p-6 rounded-lg shadow-md lg:col-span-2">
                 <h3
                   className="text-lg font-medium mb-4"
                   style={{ color: colors.primary }}
@@ -758,7 +769,7 @@ const MarketPlace = () => {
                             <tr
                               key={idx}
                               className={
-                                idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                                idx % 2 === 0 ? "bg-[#faf6e9]" : "bg-[#fefaef]"
                               }
                             >
                               <td className="py-3 px-4 font-medium">

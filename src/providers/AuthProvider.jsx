@@ -111,31 +111,6 @@ const AuthProvider = ({ children }) => {
       return { role: "Not set" }; // Return default data on error
     }
   };
-
-  // Add plant to database
-  // const addPlantToDatabase = async (plant) => {
-  //   try {
-  //     // Method 1: Let Firebase generate a random ID
-  //     const plantsRef = collection(db, "plants");
-  //     await addDoc(plantsRef, {
-  //       name: plant.name,
-  //       stage: "Seed",
-  //       original_plant_id: plant.original_plant_id,
-  //       price: plant.price,
-  //       image: plant.image,
-  //       sci_name: plant.sci_name,
-  //       planting_date: plant.planting_date,
-  //       harvest_date: plant.harvest_date,
-  //       stock: plant.stock,
-  //       categories: plant.categories,
-  //     });
-  //   } catch (error) {
-  //     console.error("Error adding plant to database:", error.message);
-  //     // Log more detailed error information
-  //     console.error("Full error:", error);
-  //     console.error("Plant data:", plant);
-  //   }
-  // };
   const addPlantToDatabase = async (plant) => {
     try {
       const plantsRef = collection(db, "plants");

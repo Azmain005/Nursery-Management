@@ -1,13 +1,11 @@
 // src/pages/utils/Cart.jsx
-
 import { doc, runTransaction, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { NavLink, useNavigate } from "react-router-dom";
-import EmptyCartImage from "../../assets/empty-cart.png";
 import { db } from "../../Auth/firebase.init";
+import EmptyCartImage from "../../assets/empty-cart.png";
 import { useCart } from "../../providers/CartProvider";
-
 
 const Cart = () => {
   const { cartItems, removeFromCart } = useCart();
@@ -23,20 +21,15 @@ const Cart = () => {
     setQuantities(init);
   }, [cartItems]);
 
-  // Handles +/- clicks, writes immediately to Firestore and updates UI
   const handleQtyChange = async (id, delta) => {
     const newQty = Math.max(1, (quantities[id] || 1) + delta);
-
-    // Optimistically update UI
     setQuantities((q) => ({ ...q, [id]: newQty }));
 
     try {
-      // Persist to Firestore
       await updateDoc(doc(db, "cart", id), { quantity: newQty });
-      // onSnapshot will sync cartItems for you
+      // onSnapshot will pick up the change and sync cartItems
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      // rollback UI change on failure
       setQuantities((q) => ({
         ...q,
         [id]: cartItems.find((i) => i.id === id)?.quantity || 1,
@@ -51,10 +44,9 @@ const Cart = () => {
     0
   );
 
-  // NEW: Confirm Order handler
+  // Confirm Order: decrement inventory stock then navigate to checkout
   const handleConfirmOrder = async () => {
     try {
-      // For each cart‐line, decrement its inventory.stock
       await Promise.all(
         cartItems.map((cartLine) => {
           const invRef = doc(db, "inventory", cartLine.plantId);
@@ -70,8 +62,8 @@ const Cart = () => {
           });
         })
       );
-      // All transactions succeeded → go to checkout:
-      navigate("/checkout");
+      // pass the confirmed lines into checkout
+      navigate("/checkout", { state: { cartItems } });
     } catch (err) {
       console.error("Failed to confirm order:", err);
       alert(err.message || "Could not confirm order. Please try again.");
@@ -97,11 +89,11 @@ const Cart = () => {
               Your shopping cart is empty!
             </p>
             <NavLink to="/" className="btn bg-[#02542d] text-white">
-              Continue
+              Continue Shopping
             </NavLink>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white rounded-lg p-4 shadow">
+          <div className="overflow-x-auto bg-[#fefaef] rounded-lg p-4 shadow">
             <table className="min-w-full">
               <thead>
                 <tr className="text-left text-[#607b64] border-b">
@@ -127,7 +119,7 @@ const Cart = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleQtyChange(item.id, -1)}
-                          className="px-2 py-1 bg-gray-200 rounded"
+                          className="px-2 py-1 bg-[#9bab9a] rounded h-8 hover:bg-[#7a8b7a]"
                         >
                           –
                         </button>
@@ -135,11 +127,11 @@ const Cart = () => {
                           type="text"
                           value={quantities[item.id] || item.quantity}
                           readOnly
-                          className="w-12 text-center border rounded"
+                          className="w-12 text-center border rounded bg-[#9bab9a] h-8"
                         />
                         <button
                           onClick={() => handleQtyChange(item.id, +1)}
-                          className="px-2 py-1 bg-gray-200 rounded"
+                          className="px-2 py-1 bg-[#9bab9a] rounded h-8 hover:bg-[#7a8b7a]"
                         >
                           +
                         </button>
@@ -151,9 +143,9 @@ const Cart = () => {
                         </button>
                       </div>
                     </td>
-                    <td className="p-2 text-[#2c5c2c]">৳{item.price}</td>
+                    <td className="p-2 text-[#2c5c2c]">${item.price}</td>
                     <td className="p-2 text-[#2c5c2c]">
-                      ৳{item.price * item.quantity}
+                      ${item.price * item.quantity}
                     </td>
                   </tr>
                 ))}
@@ -164,23 +156,22 @@ const Cart = () => {
               <div className="bg-[#607b64] text-white p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
                   <span>Sub-Total:</span>
-                  <span>৳{subtotal}</span>
+                  <span>${subtotal}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>৳{subtotal}</span>
+                  <span>${subtotal}</span>
                 </div>
               </div>
             </div>
 
             <div className="mt-6 flex justify-between">
-              <NavLink to="/" className="btn bg-[#02542d] text-white">
+              <NavLink to="/" className="btn bg-[#3e5931] text-white">
                 Continue Shopping
               </NavLink>
-              {/* REPLACED with a button so we can run stock‐update logic */}
               <button
                 onClick={handleConfirmOrder}
-                className="btn bg-[#02542d] text-white"
+                className="btn bg-[#3e5931] text-white"
               >
                 Confirm Order
               </button>

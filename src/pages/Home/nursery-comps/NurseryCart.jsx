@@ -1,13 +1,12 @@
-import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../../providers/AuthProvider";
 import {
   collection,
-  getDocs,
   deleteDoc,
   doc,
+  getDocs,
   updateDoc,
   runTransaction,
 } from "firebase/firestore";
+import { useContext, useEffect, useState } from "react";
 import { db } from "../../../Auth/firebase.init";
 import EmptyCartImage from "../../../assets/empty-cart.png";
 import { useNurseryCart } from "./NurseryCartProvider";
@@ -15,6 +14,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
 import { FaTrash } from "react-icons/fa";
 import Loader from "../../../components/Loader/Loader";
+import { AuthContext } from "../../../providers/AuthProvider";
 
 const NurseryCart = () => {
   const { user } = useContext(AuthContext);

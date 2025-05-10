@@ -8,7 +8,6 @@ import { FaUser } from "react-icons/fa";
 // Import profile components
 import { ProfileHeader } from "./profiles/CommonComponents";
 import VendorProfile from "./profiles/VendorProfile";
-import AdminProfile from "./profiles/AdminProfile";
 import NurseryWorkerProfile from "./profiles/NurseryWorkerProfile";
 import SupplierProfile from "./profiles/SupplierProfile";
 
@@ -132,18 +131,20 @@ const Profile = () => {
                 );
             case "admin":
                 return (
-                    <AdminProfile
-                        user={user}
-                        userData={userData}
-                        handleUpdateProfile={handleUpdateProfile}
-                        displayName={displayName}
-                        setDisplayName={setDisplayName}
-                        handleUpdatePassword={handleUpdatePassword}
-                        newPassword={newPassword}
-                        setNewPassword={setNewPassword}
-                        confirmPassword={confirmPassword}
-                        setConfirmPassword={setConfirmPassword}
-                    />
+                    <div className="space-y-6">
+                        <ProfileHeader 
+                            user={user} 
+                            userData={userData} 
+                            handleUpdateProfile={handleUpdateProfile}
+                            displayName={displayName}
+                            setDisplayName={setDisplayName}
+                            handleUpdatePassword={handleUpdatePassword}
+                            newPassword={newPassword}
+                            setNewPassword={setNewPassword}
+                            confirmPassword={confirmPassword}
+                            setConfirmPassword={setConfirmPassword}
+                        />
+                    </div>
                 );
             case "nurseryworker":
                 return (

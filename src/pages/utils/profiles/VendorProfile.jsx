@@ -19,9 +19,6 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch order history from cart
-                const cartRef = collection(db, "cart");
-                const cartSnapshot = await getDocs(cartRef);
                 const orders = [];
                 
                 // Fetch all user data for names
@@ -31,19 +28,46 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
                 userDataSnapshot.forEach(doc => {
                     userDataMap[doc.id] = doc.data();
                 });
+                console.log("SHow data", userDataMap);
 
-                cartSnapshot.forEach(doc => {
-                    const cartData = doc.data();
-                    if (cartData.userId === user.uid) {
-                        const buyerData = userDataMap[cartData.userId];
-                        const totalAmount = (cartData.price || 0) * (cartData.quantity || 0);
 
+                // Fetch from confirmed collection
+                const confirmedRef = collection(db, "confirmed");
+                const confirmedSnapshot = await getDocs(confirmedRef);
+                
+                confirmedSnapshot.forEach(doc => {
+                    const confirmedData = doc.data();
+                    if (confirmedData.userId === user.uid) {
+                        const buyerData = userDataMap[confirmedData.userId];
+                        
                         orders.push({ 
                             id: doc.id, 
-                            ...cartData,
-                            date: cartData.timestamp?.toDate() || new Date(),
-                            buyerName: buyerData?.displayName || 'Unknown User',
-                            totalAmount
+                            ...confirmedData,
+                            date: confirmedData.confirmedAt?.toDate() || confirmedData.timestamp?.toDate() || new Date(),
+                            buyerName: confirmedData.customerName || buyerData?.displayName || 'Unknown User',
+                            status: 'Confirmed'
+                        });
+                    }
+                });
+
+                // Fetch from ordered collection
+                const orderedRef = collection(db, "ordered");
+                const orderedSnapshot = await getDocs(orderedRef);
+                
+                orderedSnapshot.forEach(doc => {
+                    const orderedData = doc.data();
+                    if (orderedData.userId === user.uid) {
+                        const buyerData = userDataMap[orderedData.userId];
+                        const address = `${buyerData.address.street}, ${buyerData.address.city}, ${buyerData.address.state}, ${buyerData.address.country}, ${buyerData.address.zipCode}`;
+                
+
+                        
+                        orders.push({ 
+                            id: doc.id, 
+                            ...orderedData, address,
+                            date: orderedData.timestamp?.toDate() || new Date(),
+                            buyerName: orderedData.customerName || buyerData?.displayName || 'Unknown User',
+                            status: 'Pending'
                         });
                     }
                 });
@@ -186,21 +210,56 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
             </div>
 
             {/* Order History */}
+{/* Order History */}
             <div className="bg-[#FAF6E9] p-6 rounded-lg border border-[#C8C0C0]">
                 <h4 className="text-xl font-semibold text-[#02542d] mb-4">Order History</h4>
                 {orderHistory.length > 0 ? (
                     <div className="space-y-4">
                         {orderHistory.map(order => (
+                            console.log("order show",order),
                             <div key={order.id} className="border-b border-[#C8C0C0] pb-4 last:border-b-0">
                                 <div className="space-y-2">
                                     <p className="font-medium text-[#02542d]">Order #{order.id}</p>
                                     <p className="text-sm text-gray-600">Date: {order.date.toLocaleDateString()}</p>
-                                    <p className="text-sm text-gray-600">Status: {order.status || 'Pending'}</p>
+                                    <p className="text-sm text-gray-600">Status: {order.status}</p>
                                     <p className="text-sm text-gray-600">Buyer: {order.buyerName}</p>
-                                    <p className="text-sm text-gray-600">Name: {order.name}</p>
-                                    <p className="text-sm text-gray-600">Quantity: {order.quantity}</p>
-                                    <p className="text-sm text-gray-600">Price: ${(order.totalAmount / order.quantity).toFixed(2)}</p>
-                                    <p className="text-sm font-medium text-gray-600">Total Amount: ${order.totalAmount.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600">Address: {order.address}</p>
+                                    
+                                    {/* Items list */}
+                                    <div className="mt-2">
+                                        <p className="text-sm font-medium text-gray-700">Items:</p>
+                                        {order.items?.map((item, index) => {
+                                            const unitPrice = Number(item.unitPrice) || 0;
+                                            const quantity = Number(item.quantity) || 0;
+                                            const itemTotal = unitPrice * quantity;
+                                            
+                                            return (
+                                                <div key={index} className="flex items-start mt-2">
+                                                    <img 
+                                                        src={item.image} 
+                                                        alt={item.name} 
+                                                        className="w-12 h-12 object-cover rounded mr-3"
+                                                    />
+                                                    <div>
+                                                        <p className="text-sm text-gray-800">{item.name}</p>
+                                                        <p className="text-xs text-gray-600">
+                                                            {quantity} × ${unitPrice.toFixed(2)} = ${itemTotal.toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    <p className="text-sm font-medium text-gray-700 mt-2">
+                                        Total Amount: ${order.totalAmount 
+                                            ? Number(order.totalAmount).toFixed(2) 
+                                            : (order.items?.reduce((sum, item) => {
+                                                const price = Number(item.unitPrice) || 0;
+                                                const qty = Number(item.quantity) || 0;
+                                                return sum + (price * qty);
+                                            }, 0).toFixed(2))}
+                                    </p>
                                 </div>
                             </div>
                         ))}
@@ -213,4 +272,4 @@ const VendorProfile = ({ user, userData, handleUpdateProfile, displayName, setDi
     );
 };
 
-export default VendorProfile; 
+export default VendorProfile;
