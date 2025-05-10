@@ -1,3 +1,4 @@
+import { updateProfile } from "firebase/auth";
 import { useContext, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import leaf from "../../assets/leaf.png";
@@ -10,29 +11,32 @@ const Register = () => {
     useContext(AuthContext);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
   const handleCreateUser = async (e) => {
     e.preventDefault();
     const name = e.target.name.value;
     const email = e.target.email.value;
     const password = e.target.password.value;
-    console.log(email, password);
+    console.log(email, password, name);
     setError("");
     createUser(email, password)
       .then((result) => {
         const user = result.user;
-        console.log(user);
-        // Firebase post data
-        // setDoc(doc(db, "user_data", user.uid), {
-        //   email: user.email,
-        //   role: "Vendor",
-        // });
-        addUserToDatabase(user);
-        navigate("/");
+
+        // Update the user profile to include the name
+        return updateProfile(user, {
+          displayName: name,
+        }).then(() => {
+          console.log(user);
+          addUserToDatabase(user);
+          navigate("/");
+        });
       })
       .catch((error) => {
         setError(error.message);
         console.log(error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
