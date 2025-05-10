@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { collection, getDocs, addDoc, where, query } from "firebase/firestore";
+import { collection, getDocs, addDoc, where, query, doc, getDoc } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
 import { AuthContext } from "../../../providers/AuthProvider";
 import { IoIosSearch } from "react-icons/io";
@@ -13,9 +13,9 @@ const Maintenance = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
-  const materialsPerPage = 12; // 4 rows * 3 cards per row
   const { user } = useContext(AuthContext);
+  const materialsPerPage = 12; // 4 rows * 3 cards per row
+  const [supplierNames, setSupplierNames] = useState({});
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -29,6 +29,14 @@ const Maintenance = () => {
           .filter((material) => material.quantity > 0); // Only include materials with quantity > 0
         setMaterials(materialsData);
         setFilteredMaterials(materialsData);
+
+        const userSnapshot = await getDocs(collection(db, "user_data"));
+        const supplierMap = {};
+        userSnapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          supplierMap[doc.id] = data.displayName || data.name || data.email || "Unknown Supplier";
+        });
+        setSupplierNames(supplierMap);
       } catch (error) {
         console.error("Error fetching materials:", error);
       } finally {
@@ -50,66 +58,72 @@ const Maintenance = () => {
     }
   }, [searchTerm, materials]);
 
-  const fetchWorkerCartItems = async () => {
-    setIsLoading(true);
+  // New add to cart handler: only adds material to nursery_cart with workerId
+  const handleAddToCart = async (material) => {
+    if (!user || !user.uid) {
+      alert("User not authenticated. Please log in again.");
+      return;
+    }
     try {
-      // Fetch the logged-in user's ID from AuthContext
-      const userId = user.uid; // Assuming `user.uid` is available in AuthContext
-
-      if (!userId) {
-        throw new Error("User ID not found. Please log in again.");
-      }
-
-      // Query the nursery_cart collection for items added by the logged-in worker
+      // Check if material already exists in the cart for this worker (by name and supplier)
       const cartQuery = query(
         collection(db, "nursery_cart"),
-        where("workerId", "==", userId)
+        where("workerId", "==", user.uid),
+        where("name", "==", material.name)
       );
-
-      const querySnapshot = await getDocs(cartQuery);
-      const cartItems = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setCartItems(cartItems); // Update state with the worker's cart items
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
-      alert("Failed to fetch cart items. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddToCart = async (material) => {
-    setIsLoading(true);
-    try {
-      // Fetch the logged-in user's email and ID from AuthContext
-      const userEmail = user.email;
-      const userId = user.uid; // Assuming `user.uid` is available in AuthContext
-
-      if (!userId) {
-        throw new Error("User ID not found. Please log in again.");
+      const cartSnapshot = await getDocs(cartQuery);
+      let alreadyExists = false;
+      cartSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.supplierName === (supplierNames[material.supplierId] || "Unknown Supplier")) {
+          alreadyExists = true;
+        }
+      });
+      if (alreadyExists) {
+        alert("Material already exists in the cart.");
+        return;
       }
 
-      // Add the material to the nursery_cart collection with the worker's ID
+      // Get the latest material data using a query with name and supplierId
+      const materialQuery = query(
+        collection(db, "Material_for_sell"),
+        where("name", "==", material.name),
+        where("supplierId", "==", material.supplierId)
+      );
+      const materialSnapshot = await getDocs(materialQuery);
+      
+      if (materialSnapshot.empty) {
+        alert("Material no longer available.");
+        return;
+      }
+      
+      // We'll use the first matching document
+      const materialDoc = materialSnapshot.docs[0];
+      const currentMaterial = materialDoc.data();
+      const currentQuantity = currentMaterial.quantity || 0;
+      
+      if (currentQuantity <= 0) {
+        alert("This material is out of stock.");
+        return;
+      }
+      
+      // Otherwise, add to cart with the full quantity from Material_for_sell
       await addDoc(collection(db, "nursery_cart"), {
-        workerId: userId, // Associate the material with the worker
-        materialId: material.id,
-        name: material.name,
-        price: material.price,
-        quantity: material.quantity, // Include quantity
-        description: material.description || "", // Include description if available
-        image: material.image || "https://via.placeholder.com/150", // Default image if not provided
-        addedAt: new Date().toISOString(), // Timestamp for when the material was added
+        workerId: user.uid, // Unique to each worker
+        materialId: materialDoc.id,
+        name: currentMaterial.name,
+        price: currentMaterial.price,
+        quantity: currentQuantity, // Use the full quantity from Material_for_sell
+        description: currentMaterial.description || "",
+        image: currentMaterial.image || "https://via.placeholder.com/150",
+        addedAt: new Date().toISOString(),
+        supplierId: currentMaterial.supplierId,
+        supplierName: supplierNames[currentMaterial.supplierId] || "Unknown Supplier",
       });
-
-      alert(`${material.name} added to cart successfully!`);
+      alert(`${currentMaterial.name} added to cart successfully with full quantity of ${currentQuantity}!`);
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("Failed to add to cart. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -172,7 +186,8 @@ const Maintenance = () => {
                 <h3 className="text-lg font-semibold text-white mb-1">
                   {material.name}
                 </h3>
-                <p className="text-sm text-white mb-4">${material.price}</p>
+                <p className="text-sm text-white mb-1">${material.price}</p>
+                <p className="text-sm text-white mb-4">Supplier: {supplierNames[material.supplierId] || "Unknown Supplier"}</p>
                 <button
                   onClick={() => handleAddToCart(material)}
                   className="mt-auto bg-[#faf6e9] text-[#607b64] font-semibold py-2 px-4 rounded flex items-center justify-center gap-2"

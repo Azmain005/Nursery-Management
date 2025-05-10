@@ -6,15 +6,22 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
 import EmptyCartImage from "../../../assets/empty-cart.png";
+import { useNurseryCart } from "./NurseryCartProvider";
+import { useNavigate, NavLink } from "react-router-dom";
+import { IoMdClose } from "react-icons/io";
+import { FaTrash } from "react-icons/fa";
+import Loader from "../../../components/Loader/Loader";
 
 const NurseryCart = () => {
   const { user } = useContext(AuthContext);
-  const [cartItems, setCartItems] = useState([]);
+  const { cartItems, removeFromCart, updateQuantity } = useNurseryCart();
   const [quantities, setQuantities] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -47,19 +54,7 @@ const NurseryCart = () => {
       ...q,
       [id]: newQty,
     }));
-
-    const updatedCartItems = cartItems.map((item) =>
-      item.id === id ? { ...item, quantity: newQty } : item
-    );
-    setCartItems(updatedCartItems);
-
-    try {
-      await updateDoc(doc(db, "nursery_cart", id), {
-        quantity: newQty,
-      });
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-    }
+    await updateQuantity(id, newQty);
   };
 
   const handleRemoveFromCart = async (itemId) => {
@@ -77,6 +72,31 @@ const NurseryCart = () => {
     return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
+  const handleConfirmOrder = async () => {
+    try {
+      // For each cart item, decrement stock in Material_for_sell
+      await Promise.all(
+        cartItems.map((cartLine) => {
+          const matRef = doc(db, "Material_for_sell", cartLine.materialId);
+          return runTransaction(db, async (tx) => {
+            const matSnap = await tx.get(matRef);
+            const currentStock = matSnap.data()?.quantity ?? 0;
+            if (currentStock < cartLine.quantity) {
+              throw new Error(
+                `Not enough stock for "${cartLine.name}". Only ${currentStock} left.`
+              );
+            }
+            tx.update(matRef, { quantity: currentStock - cartLine.quantity });
+          });
+        })
+      );
+      navigate("/nurserycheckout");
+    } catch (err) {
+      console.error("Failed to confirm order:", err);
+      alert(err.message || "Could not confirm order. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#faf6e9] flex flex-col">
       <main className="flex-1 flex flex-col p-6">
@@ -85,7 +105,7 @@ const NurseryCart = () => {
         </h1>
 
         {isLoading ? (
-          <p>Loading...</p>
+          <Loader />
         ) : cartItems.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <img
@@ -97,72 +117,105 @@ const NurseryCart = () => {
             <p className="text-lg text-gray-600 mb-4">
               Your nursery cart is empty!
             </p>
+            <NavLink to="/nurseryWorker/order-raw-material" className="btn bg-[#02542d] text-white">
+              Order Material
+            </NavLink>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-[#faf6e9] rounded-lg p-4">
+          <div className="overflow-x-auto bg-[#faf6e9] rounded-lg p-4 shadow">
             <table className="min-w-full">
               <thead>
                 <tr className="text-left text-[#607b64]">
                   <th className="p-2">Image</th>
                   <th className="p-2">Product Name</th>
                   <th className="p-2">Quantity</th>
-                  <th className="p-2">Subtotal</th>
+                  <th className="p-2">Unit Price</th>
+                  <th className="p-2">Total</th>
+                  <th className="p-2">Supplier</th>
+                  <th className="p-2 text-center">Remove</th>
+                </tr>
+                <tr>
+                  <td colSpan={7} style={{ height: '2px', background: '#02542d', padding: 0 }}></td>
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map((item) => (
-                  <tr key={item.id} className="bg-[#faf6e9]">
-                    <td className="p-2">
-                      <img
-                        src={item.image || "https://via.placeholder.com/150"}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    </td>
-                    <td className="p-2 text-[#2c5c2c]">{item.name}</td>
-                    <td className="p-2">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleQtyChange(item.id, -1)}
-                          className="px-2 py-1 bg-gray-200 rounded"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="text"
-                          value={quantities[item.id] || item.quantity}
-                          readOnly
-                          className="w-12 text-center border rounded"
+                {cartItems.map((item, idx) => (
+                  <>
+                    <tr key={item.id}>
+                      <td className="p-2">
+                        <img
+                          src={item.image || "https://via.placeholder.com/150"}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded"
                         />
+                      </td>
+                      <td className="p-2 text-[#2c5c2c]">{item.name}</td>
+                      <td className="p-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleQtyChange(item.id, -1)}
+                            className="px-2 py-1 bg-gray-200 rounded"
+                          >
+                            –
+                          </button>
+                          <input
+                            type="text"
+                            value={quantities[item.id] || item.quantity}
+                            readOnly
+                            className="w-12 text-center border rounded"
+                          />
+                          <button
+                            onClick={() => handleQtyChange(item.id, +1)}
+                            className="px-2 py-1 bg-gray-200 rounded"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-2 text-[#2c5c2c]">৳{item.price}</td>
+                      <td className="p-2 text-[#2c5c2c]">
+                        ৳{item.price * item.quantity}
+                      </td>
+                      <td className="p-2 text-[#2c5c2c]">{item.supplierName || "Unknown Supplier"}</td>
+                      <td className="p-2 text-center">
                         <button
-                          onClick={() => handleQtyChange(item.id, +1)}
-                          className="px-2 py-1 bg-gray-200 rounded"
+                          onClick={() => removeFromCart(item)}
+                          className="text-red-500 hover:text-red-700 flex justify-center items-center mx-auto"
+                          aria-label="Remove from cart"
                         >
-                          +
+                          <FaTrash size={18} />
                         </button>
-                      </div>
-                    </td>
-                    <td className="p-2 text-[#2c5c2c]">
-                      ${item.price * item.quantity}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    <tr key={`sep-${item.id}`}> 
+                      <td colSpan={7} style={{ height: '2px', background: '#02542d', padding: 0 }}></td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>
-
-            <div className="mt-6 flex justify-between">
-              <button
-                onClick={() => (window.location.href = "/maintenance")}
-                className="btn bg-[#02542d] text-white"
-              >
-                Order More
-              </button>
-              <div className="bg-[#607b64] text-white p-4 rounded-lg">
+            <div className="mt-6 flex justify-end">
+              <div className="bg-[#607b64] text-white p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span>Sub-Total:</span>
+                  <span>৳{calculateTotal()}</span>
+                </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>${calculateTotal()}</span>
+                  <span>৳{calculateTotal()}</span>
                 </div>
               </div>
+            </div>
+            <div className="mt-6 flex justify-between">
+              <NavLink to="/nurseryWorker/order-raw-material" className="btn bg-[#02542d] text-white">
+                Order More
+              </NavLink>
+              <button
+                onClick={handleConfirmOrder}
+                className="btn bg-[#02542d] text-white"
+              >
+                Confirm Order
+              </button>
             </div>
           </div>
         )}

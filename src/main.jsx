@@ -27,6 +27,8 @@ import PendingOrder from "./pages/Home/supplier-comps/pendingOrder";
 
 import NurseryCart from "./pages/Home/nursery-comps/NurseryCart";
 import { CartProvider } from "./providers/CartProvider";
+import NurseryCheckout from "./pages/Home/nursery-comps/NurseryCheckout";
+import { NurseryCartProvider } from "./pages/Home/nursery-comps/NurseryCartProvider";
 
 const router = createBrowserRouter([
   {
@@ -77,7 +79,19 @@ const router = createBrowserRouter([
         path: "/nurserycart",
         element: (
           <PrivateRoute>
-            <NurseryCart />
+            <NurseryCartProvider>
+              <NurseryCart />
+            </NurseryCartProvider>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/nurserycheckout",
+        element: (
+          <PrivateRoute>
+            <NurseryCartProvider>
+              <NurseryCheckout />
+            </NurseryCartProvider>
           </PrivateRoute>
         ),
       },
@@ -111,7 +125,9 @@ const router = createBrowserRouter([
         path: "/nurseryWorker",
         element: (
           <PrivateRoute>
-            <Worker />
+            <NurseryCartProvider>
+              <Worker />
+            </NurseryCartProvider>
           </PrivateRoute>
         ),
         children: [

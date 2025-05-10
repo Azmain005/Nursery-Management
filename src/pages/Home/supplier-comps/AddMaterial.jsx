@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { IoIosSearch, IoIosAdd } from "react-icons/io";
 import {
   collection,
@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../Auth/firebase.init";
 import LoaderPlant from "../../../components/Loader/LoaderPlant";
+import { AuthContext } from "../../../providers/AuthProvider";
 
 const AddMaterial = () => {
   const [materials, setMaterials] = useState([]);
@@ -18,9 +19,11 @@ const AddMaterial = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [editablePrice, setEditablePrice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const materialsPerPage = 7;
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -81,34 +84,54 @@ const AddMaterial = () => {
       setIsLoading(true); // Show loader only in the modal
 
       const materialCollection = collection(db, "Material_for_sell");
-      const q = query(
+      
+      // First, check if the same material from the same supplier exists
+      const sameSupplierQuery = query(
         materialCollection,
-        where("name", "==", selectedMaterial.name)
+        where("name", "==", selectedMaterial.name),
+        where("supplierId", "==", user.uid)
       );
-      const querySnapshot = await getDocs(q);
+      const sameSupplierSnapshot = await getDocs(sameSupplierQuery);
 
-      if (!querySnapshot.empty) {
-        // Material exists, update the quantity
-        const existingDoc = querySnapshot.docs[0];
+      if (!sameSupplierSnapshot.empty) {
+        // Case 1: Same material from same supplier exists, update quantity and price
+        const existingDoc = sameSupplierSnapshot.docs[0];
         const existingData = existingDoc.data();
         const newQuantity = parseInt(existingData.quantity) + quantity;
 
         await updateDoc(doc(db, "Material_for_sell", existingDoc.id), {
           quantity: newQuantity,
+          price: Number(editablePrice),
+          // Keep existing supplierId
         });
+        
+        alert(`Updated existing material: ${selectedMaterial.name}. New quantity: ${newQuantity}`);
       } else {
-        // Material does not exist, create a new document
+        // Check if material exists from different supplier
+        const differentSupplierQuery = query(
+          materialCollection,
+          where("name", "==", selectedMaterial.name)
+        );
+        const differentSupplierSnapshot = await getDocs(differentSupplierQuery);
+
+        // Case 2 & 3: Either material exists with different supplier or doesn't exist at all
+        // In both cases, we create a new document
         await addDoc(materialCollection, {
           name: selectedMaterial.name,
-          price: selectedMaterial.price,
+          price: Number(editablePrice),
           image: selectedMaterial.image,
           quantity,
+          supplierId: user.uid,
         });
+        
+        alert(`Added new material: ${selectedMaterial.name} with quantity: ${quantity}`);
       }
 
       setSelectedMaterial(null); // Close the modal
+      form.reset();
     } catch (error) {
       console.error("Error adding or updating material:", error);
+      alert("Error adding material. Please try again.");
     } finally {
       setIsLoading(false); // Hide loader only in the modal
     }
@@ -166,6 +189,7 @@ const AddMaterial = () => {
                   className="btn bg-[#faf6e9] border-none"
                   onClick={() => {
                     setSelectedMaterial(material);
+                    setEditablePrice(material.price);
                     setTimeout(() => {
                       document.getElementById("add_material_modal").showModal();
                     }, 0);
@@ -248,10 +272,13 @@ const AddMaterial = () => {
               <div className="flex flex-col">
                 <label className="font-semibold mb-1">Price</label>
                 <input
-                  type="text"
-                  value={`$${selectedMaterial.price}`}
+                  type="number"
+                  name="price"
+                  value={editablePrice}
+                  onChange={e => setEditablePrice(e.target.value)}
                   className="input bg-[#faf6e9] outline-none w-full"
-                  readOnly
+                  min="0"
+                  required
                 />
               </div>
 
