@@ -653,7 +653,7 @@ const MarketPlace = () => {
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Product Sales Chart - Changed from Pie to Line */}
+              {/* Product Sales Chart - Line Chart */}
               <div className="bg-[#fefaef] p-6 rounded-lg shadow-md">
                 <h3
                   className="text-lg font-medium mb-4"
@@ -704,7 +704,7 @@ const MarketPlace = () => {
                 </div>
               </div>
 
-              {/* Revenue By Product Chart */}
+              {/* Revenue By Product Chart - Bar Chart */}
               <div className="bg-[#fefaef] p-6 rounded-lg shadow-md">
                 <h3
                   className="text-lg font-medium mb-4"
@@ -714,27 +714,38 @@ const MarketPlace = () => {
                 </h3>
                 <div className="h-64">
                   {salesData.productSales.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={salesData.productSales}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    <div style={{ width: "100%", overflowX: "auto" }}>
+                      <div
+                        style={{
+                          minWidth: Math.max(
+                            500,
+                            salesData.productSales.length * 100
+                          ),
+                        }}
                       >
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip
-                          formatter={(value) => [
-                            `$${formatCurrency(value)}`,
-                            "Revenue",
-                          ]}
-                        />
-                        <Legend />
-                        <Bar
-                          dataKey="revenue"
-                          fill={colors.primary}
-                          name="Revenue ($)"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart
+                            data={salesData.productSales}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip
+                              formatter={(value) => [
+                                `$${formatCurrency(value)}`,
+                                "Revenue",
+                              ]}
+                            />
+                            <Legend />
+                            <Bar
+                              dataKey="revenue"
+                              fill={colors.primary}
+                              name="Revenue ($)"
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                   ) : (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-gray-500">No revenue data available</p>
