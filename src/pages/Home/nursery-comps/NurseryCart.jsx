@@ -5,6 +5,7 @@ import {
   getDocs,
   updateDoc,
   runTransaction,
+  getDoc,
 } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 import { db } from "../../../Auth/firebase.init";
@@ -21,6 +22,7 @@ const NurseryCart = () => {
   const { cartItems, removeFromCart, updateQuantity } = useNurseryCart();
   const [quantities, setQuantities] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [localCartItems, setLocalCartItems] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,8 +32,8 @@ const NurseryCart = () => {
         const querySnapshot = await getDocs(collection(db, "nursery_cart"));
         const items = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((item) => item.userId === user.uid); // Ensure userId matches user.uid
-        setCartItems(items);
+          .filter((item) => item.workerId === user.uid); // Filter by workerId instead of userId
+        setLocalCartItems(items);
 
         const initQuantities = {};
         items.forEach((item) => {
@@ -45,7 +47,9 @@ const NurseryCart = () => {
       }
     };
 
-    fetchCartItems();
+    if (user && user.uid) {
+      fetchCartItems();
+    }
   }, [user]);
 
   const handleQtyChange = async (id, delta) => {
@@ -54,46 +58,69 @@ const NurseryCart = () => {
       ...q,
       [id]: newQty,
     }));
-    await updateQuantity(id, newQty);
+    
+    try {
+      const itemRef = doc(db, "nursery_cart", id);
+      await updateDoc(itemRef, { quantity: newQty });
+      
+      // Update local state
+      setLocalCartItems(prevItems => 
+        prevItems.map(item => 
+          item.id === id ? { ...item, quantity: newQty } : item
+        )
+      );
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      alert("Failed to update quantity. Please try again.");
+    }
   };
 
   const handleRemoveFromCart = async (itemId) => {
     try {
+      // Only delete from nursery_cart collection without affecting Material_for_sell
       await deleteDoc(doc(db, "nursery_cart", itemId));
-      setCartItems((prevItems) =>
-        prevItems.filter((item) => item.id !== itemId)
-      );
+      
+      // Update local state
+      setLocalCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+      
     } catch (error) {
       console.error("Error removing item from cart:", error);
+      alert("Failed to remove item from cart. Please try again.");
     }
   };
 
   const calculateTotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return localCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
   const handleConfirmOrder = async () => {
     try {
-      // For each cart item, decrement stock in Material_for_sell
-      await Promise.all(
-        cartItems.map((cartLine) => {
-          const matRef = doc(db, "Material_for_sell", cartLine.materialId);
-          return runTransaction(db, async (tx) => {
-            const matSnap = await tx.get(matRef);
-            const currentStock = matSnap.data()?.quantity ?? 0;
-            if (currentStock < cartLine.quantity) {
-              throw new Error(
-                `Not enough stock for "${cartLine.name}". Only ${currentStock} left.`
-              );
-            }
-            tx.update(matRef, { quantity: currentStock - cartLine.quantity });
-          });
-        })
-      );
+      // Check if all items have sufficient stock before proceeding
+      for (const cartItem of localCartItems) {
+        const matRef = doc(db, "Material_for_sell", cartItem.materialId);
+        const matSnap = await getDoc(matRef);
+        
+        if (!matSnap.exists()) {
+          throw new Error(`Material "${cartItem.name}" is no longer available.`);
+        }
+        
+        const currentStock = matSnap.data()?.quantity ?? 0;
+        if (currentStock < cartItem.quantity) {
+          throw new Error(
+            `Not enough stock for "${cartItem.name}". Only ${currentStock} left.`
+          );
+        }
+      }
+      
+      // Store cart items in session storage for checkout
+      // DO NOT update quantities here - will be done in checkout on order confirmation
+      sessionStorage.setItem('nurseryCartItems', JSON.stringify(localCartItems));
+      
+      // Navigate to checkout
       navigate("/nurserycheckout");
     } catch (err) {
-      console.error("Failed to confirm order:", err);
-      alert(err.message || "Could not confirm order. Please try again.");
+      console.error("Failed to proceed to checkout:", err);
+      alert(err.message || "Could not proceed to checkout. Please try again.");
     }
   };
 
@@ -106,7 +133,7 @@ const NurseryCart = () => {
 
         {isLoading ? (
           <Loader />
-        ) : cartItems.length === 0 ? (
+        ) : localCartItems.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <img
               src={EmptyCartImage}
@@ -139,7 +166,7 @@ const NurseryCart = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map((item, idx) => (
+                {localCartItems.map((item, idx) => (
                   <>
                     <tr key={item.id}>
                       <td className="p-2">
@@ -179,7 +206,7 @@ const NurseryCart = () => {
                       <td className="p-2 text-[#2c5c2c]">{item.supplierName || "Unknown Supplier"}</td>
                       <td className="p-2 text-center">
                         <button
-                          onClick={() => removeFromCart(item)}
+                          onClick={() => handleRemoveFromCart(item.id)}
                           className="text-red-500 hover:text-red-700 flex justify-center items-center mx-auto"
                           aria-label="Remove from cart"
                         >

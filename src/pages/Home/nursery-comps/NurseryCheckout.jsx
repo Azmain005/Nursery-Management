@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useNurseryCart } from './NurseryCartProvider';
 import { db } from '../../../Auth/firebase.init';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, runTransaction, updateDoc } from 'firebase/firestore';
 
 const NurseryCheckout = () => {
-  const { cartItems } = useNurseryCart();
+  const { cartItems, clearCart } = useNurseryCart();
+  const [checkoutItems, setCheckoutItems] = useState([]);
 
   const [form, setForm] = useState({
     firstName: '',
@@ -17,6 +18,20 @@ const NurseryCheckout = () => {
     agree: false
   });
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Ensure we have cart items from context or session storage
+  useEffect(() => {
+    if (cartItems && cartItems.length > 0) {
+      setCheckoutItems(cartItems);
+    } else {
+      // Try to get cart items from session storage
+      const storedItems = sessionStorage.getItem('nurseryCartItems');
+      if (storedItems) {
+        setCheckoutItems(JSON.parse(storedItems));
+      }
+    }
+  }, [cartItems]);
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target;
@@ -26,16 +41,61 @@ const NurseryCheckout = () => {
     }));
   };
 
-  const subtotal = cartItems.reduce(
+  const subtotal = checkoutItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
   const deliveryCharge = 0; // For nursery workers, assume no delivery charge
   const total = subtotal + deliveryCharge;
 
+  const updateMaterialQuantity = async (materialId, quantityToSubtract) => {
+    // First get the current material data
+    const materialRef = doc(db, "Material_for_sell", materialId);
+    const materialSnap = await getDoc(materialRef);
+    
+    if (!materialSnap.exists()) {
+      console.warn(`Material with ID ${materialId} not found.`);
+      return;
+    }
+    
+    const materialData = materialSnap.data();
+    const currentQuantity = materialData.quantity || 0;
+    
+    // Calculate the new quantity (ensure it doesn't go below 0)
+    const newQuantity = Math.max(0, currentQuantity - quantityToSubtract);
+    
+    console.log(`Updating material ${materialId}: current=${currentQuantity}, subtract=${quantityToSubtract}, new=${newQuantity}`);
+    
+    // Update the material quantity
+    await updateDoc(materialRef, { quantity: newQuantity });
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
+    setIsProcessing(true);
+    
     try {
+      // First, verify all items are still in stock with sufficient quantities
+      for (const item of checkoutItems) {
+        if (!item.materialId) {
+          console.warn("Item without materialId found, skipping inventory check");
+          continue;
+        }
+        
+        const materialRef = doc(db, "Material_for_sell", item.materialId);
+        const materialSnap = await getDoc(materialRef);
+        
+        if (!materialSnap.exists()) {
+          throw new Error(`Material "${item.name}" is no longer available.`);
+        }
+        
+        const currentQuantity = materialSnap.data().quantity || 0;
+        if (currentQuantity < item.quantity) {
+          throw new Error(`Not enough stock for "${item.name}". Only ${currentQuantity} left.`);
+        }
+      }
+      
+      // Create the order document
       await addDoc(collection(db, 'nursery_orders'), {
         worker: {
           firstName: form.firstName,
@@ -45,15 +105,30 @@ const NurseryCheckout = () => {
           email: form.email,
           comment: form.comment,
         },
-        items: cartItems,
+        items: checkoutItems,
         subtotal,
         total,
         createdAt: new Date().toISOString(),
       });
+      
+      // ONLY AFTER successful order creation, update the material quantities
+      for (const item of checkoutItems) {
+        if (!item.materialId) continue;
+        await updateMaterialQuantity(item.materialId, item.quantity);
+      }
+      
+      // Clear the cart after successful order
+      await clearCart();
+      
+      // Clear session storage as well
+      sessionStorage.removeItem('nurseryCartItems');
+      
       setOrderPlaced(true);
     } catch (err) {
-      alert('Failed to place order. Please try again.');
-      console.error(err);
+      alert('Failed to place order: ' + (err.message || 'Please try again.'));
+      console.error("Error during checkout:", err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -62,7 +137,9 @@ const NurseryCheckout = () => {
       <div className="min-h-screen bg-[#faf6e9] flex flex-col items-center justify-center">
         <h1 className="text-2xl font-semibold text-[#2c5c2c] mb-6">Order Confirmed!</h1>
         <p className="mb-4">Thank you for your order. Your request has been submitted to the nursery management.</p>
-        <NavLink to="/nurserycart" className="btn bg-[#02542d] text-white">Back to Cart</NavLink>
+        <NavLink to="/nurseryWorker/order-raw-material" className="btn bg-[#02542d] text-white">
+          Continue
+        </NavLink>
       </div>
     );
   }
@@ -100,7 +177,7 @@ const NurseryCheckout = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map(item => (
+                {checkoutItems.map(item => (
                   <tr key={item.id}>
                     <td className="p-2">{item.name}</td>
                     <td className="p-2">৳{item.price} × {item.quantity}</td>
@@ -119,7 +196,7 @@ const NurseryCheckout = () => {
             <label className="text-gray-600 text-sm">I confirm this order is correct and ready for processing.</label>
           </div>
           <div className="text-right">
-            <button type="submit" className="btn bg-[#02542d] text-white" disabled={!form.agree}>
+            <button type="submit" className="btn bg-[#02542d] text-white" disabled={!form.agree || isProcessing}>
               Confirm Order
             </button>
           </div>

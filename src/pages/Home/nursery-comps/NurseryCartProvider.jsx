@@ -11,6 +11,7 @@ import {
   updateDoc,
   where,
   deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
 
 const NurseryCartContext = createContext();
@@ -77,9 +78,32 @@ export function NurseryCartProvider({ children }) {
     }
   };
 
+  // Clear all items from the cart
+  const clearCart = async () => {
+    if (!user || !cartItems.length) return;
+    
+    try {
+      const batch = writeBatch(db);
+      
+      // Delete each cart item
+      cartItems.forEach(item => {
+        const cartRef = doc(db, "nursery_cart", item.id);
+        batch.delete(cartRef);
+      });
+      
+      await batch.commit();
+      
+      // Clear local state
+      setCartItems([]);
+    } catch (error) {
+      console.error("Failed to clear cart:", error);
+      alert("Failed to clear cart. Please try again.");
+    }
+  };
+
   return (
     <NurseryCartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart, updateQuantity }}
+      value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart }}
     >
       {children}
     </NurseryCartContext.Provider>

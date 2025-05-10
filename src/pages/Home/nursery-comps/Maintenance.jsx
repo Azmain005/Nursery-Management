@@ -84,43 +84,28 @@ const Maintenance = () => {
         return;
       }
 
-      // Get the latest material data using a query with name and supplierId
-      const materialQuery = query(
-        collection(db, "Material_for_sell"),
-        where("name", "==", material.name),
-        where("supplierId", "==", material.supplierId)
-      );
-      const materialSnapshot = await getDocs(materialQuery);
+      // Use the current material data directly instead of fetching it again
+      // This prevents the quantity from being potentially doubled
       
-      if (materialSnapshot.empty) {
-        alert("Material no longer available.");
-        return;
-      }
-      
-      // We'll use the first matching document
-      const materialDoc = materialSnapshot.docs[0];
-      const currentMaterial = materialDoc.data();
-      const currentQuantity = currentMaterial.quantity || 0;
-      
-      if (currentQuantity <= 0) {
+      if (material.quantity <= 0) {
         alert("This material is out of stock.");
         return;
       }
       
-      // Otherwise, add to cart with the full quantity from Material_for_sell
+      // Add to cart with the quantity from the material object passed to this function
       await addDoc(collection(db, "nursery_cart"), {
         workerId: user.uid, // Unique to each worker
-        materialId: materialDoc.id,
-        name: currentMaterial.name,
-        price: currentMaterial.price,
-        quantity: currentQuantity, // Use the full quantity from Material_for_sell
-        description: currentMaterial.description || "",
-        image: currentMaterial.image || "https://via.placeholder.com/150",
+        materialId: material.id,
+        name: material.name,
+        price: material.price,
+        quantity: material.quantity, // Use the original quantity from the card
+        description: material.description || "",
+        image: material.image || "https://via.placeholder.com/150",
         addedAt: new Date().toISOString(),
-        supplierId: currentMaterial.supplierId,
-        supplierName: supplierNames[currentMaterial.supplierId] || "Unknown Supplier",
+        supplierId: material.supplierId,
+        supplierName: supplierNames[material.supplierId] || "Unknown Supplier",
       });
-      alert(`${currentMaterial.name} added to cart successfully with full quantity of ${currentQuantity}!`);
+      alert(`${material.name} added to cart successfully with quantity of ${material.quantity}!`);
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("Failed to add to cart. Please try again.");
