@@ -78,10 +78,8 @@ const Checkout = () => {
       <main className="flex-1 p-6">
         <h1 className="text-2xl font-semibold text-[#2c5c2c] mb-6">Checkout</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/*   …your Step 1–3 JSX remains unchanged…   */}
-
-          {/* Step 4: Order Overview */}
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Order Overview */}
+          <div className="bg-[#fefaef] rounded-lg shadow p-6">
             <h2 className="flex items-center text-lg font-bold text-[#607b64] mb-4">
               <span className="inline-flex items-center justify-center w-6 h-6 mr-2 bg-[#02542d] text-white rounded-full">
                 4
@@ -101,17 +99,17 @@ const Checkout = () => {
                   <tr key={i.id}>
                     <td className="p-2">{i.name}</td>
                     <td className="p-2">
-                      ৳{i.price} × {i.quantity}
+                      ${i.price} × {i.quantity}
                     </td>
-                    <td className="p-2">৳{i.price * i.quantity}</td>
+                    <td className="p-2">${i.price * i.quantity}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <div className="mt-4 flex justify-end space-x-4 text-[#2c5c2c]">
-              <div>Sub-Total: ৳{subtotal}</div>
-              <div>Delivery: ৳{deliveryCharge}</div>
-              <div className="font-bold">Total: ৳{total}</div>
+              <div>Sub-Total: ${subtotal}</div>
+              <div>Delivery: ${deliveryCharge}</div>
+              <div className="font-bold">Total: ${total}</div>
             </div>
           </div>
 

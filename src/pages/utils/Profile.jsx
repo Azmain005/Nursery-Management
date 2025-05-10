@@ -1,15 +1,14 @@
-import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../providers/AuthProvider";
 import { updatePassword, updateProfile } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
+import { useContext, useEffect, useState } from "react";
 import { db } from "../../Auth/firebase.init";
-import { FaUser } from "react-icons/fa";
-
+import Loader from "../../components/Loader/Loader";
+import { AuthContext } from "../../providers/AuthProvider";
 // Import profile components
 import { ProfileHeader } from "./profiles/CommonComponents";
-import VendorProfile from "./profiles/VendorProfile";
 import NurseryWorkerProfile from "./profiles/NurseryWorkerProfile";
 import SupplierProfile from "./profiles/SupplierProfile";
+import VendorProfile from "./profiles/VendorProfile";
 
 const Profile = () => {
     const { user, getUserData } = useContext(AuthContext);
@@ -89,9 +88,9 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#FEFDF4]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3a5a40]"></div>
-            </div>
+           <Loader>
+            
+           </Loader>
         );
     }
 

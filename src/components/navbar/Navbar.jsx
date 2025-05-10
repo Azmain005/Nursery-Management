@@ -1,26 +1,43 @@
 import { useContext, useEffect, useState } from "react";
 import { IoMdContact, IoMdSettings } from "react-icons/io";
 import { NavLink } from "react-router-dom";
-import logo from "../../assets/logo.png";
 import { AuthContext } from "../../providers/AuthProvider";
 import { useCart } from "../../providers/CartProvider";
+// Import logo with a more reliable approach
+import logo from "../../assets/logo.png";
 
 const Navbar = () => {
   const { user, signOutUser, getRoleFromDatabase } = useContext(AuthContext);
   const { cartItems } = useCart(); // Get live cart
   const [userData, setUserData] = useState(null);
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+
+  // Fallback logo URL
+  const fallbackLogo = "https://via.placeholder.com/30x30?text=PLANTy";
+
+  // Default user avatar
+  // const defaultAvatar = "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp";
+  const defaultAvatar =
+    "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp";
 
   useEffect(() => {
-    getRoleFromDatabase(user)
-      .then((user) => {
-        setUserData(user);
-      })
-      .catch((error) => {
-        console.error("Error fetching user data:", error);
-      });
-  }, [user, getRoleFromDatabase]);
+    // Preload the logo image to ensure it's ready
+    const logoImg = new Image();
+    logoImg.src = logo;
+    logoImg.onload = () => setLogoLoaded(true);
+    logoImg.onerror = () => setLogoError(true);
 
-  console.log(userData);
+    if (user) {
+      getRoleFromDatabase(user)
+        .then((user) => {
+          setUserData(user);
+        })
+        .catch((error) => {
+          console.error("Error fetching user data:", error);
+        });
+    }
+  }, [user, getRoleFromDatabase]);
 
   const handleSignout = () => {
     signOutUser()
@@ -36,7 +53,6 @@ const Navbar = () => {
 
   // Check if user is a supplier
   const isSupplier = userData === "Supplier";
-  console.log("userrrrrrrrrrrrrrrrrrrrr", user);
 
   // Calculate cart total once
   const cartTotal = cartItems.reduce(
@@ -50,7 +66,24 @@ const Navbar = () => {
         <div className="flex-1">
           <NavLink to="/">
             <div className="flex gap-1 hover:bg-[#9bab9a] w-[105px] p-2">
-              <img src={logo} className="w-[30px]" alt="" />
+              {logoError ? (
+                // Use fallback if logo fails to load
+                <img
+                  src={fallbackLogo}
+                  className="w-[30px]"
+                  alt="PLANTy Logo"
+                />
+              ) : (
+                <img
+                  src={logo}
+                  className="w-[30px]"
+                  alt="PLANTy Logo"
+                  onError={(e) => {
+                    setLogoError(true);
+                    e.target.src = fallbackLogo;
+                  }}
+                />
+              )}
               <p className="font-semibold text-[#02542d]">PLANTy</p>
             </div>
           </NavLink>
@@ -73,13 +106,12 @@ const Navbar = () => {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
-                      {" "}
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth="2"
                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                      />{" "}
+                      />
                     </svg>
                     <span className="badge badge-xs indicator-item">
                       {cartItems.length}
@@ -120,14 +152,19 @@ const Navbar = () => {
                 role="button"
                 className="btn btn-ghost btn-circle avatar"
               >
-                <div className="w-10 rounded-full">
-                  <img
-                    alt="Tailwind CSS Navbar component"
-                    src={
-                      user?.photoURL ||
-                      "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-                    }
-                  />
+                <div className="w-10 rounded-full overflow-hidden">
+                  {user?.photoURL ? (
+                    <img
+                      alt="User avatar"
+                      src={user.photoURL}
+                      onError={(e) => {
+                        e.target.onerror = null; // Prevent infinite loop
+                        e.target.src = defaultAvatar;
+                      }}
+                    />
+                  ) : (
+                    <img alt="Default avatar" src={defaultAvatar} />
+                  )}
                 </div>
               </div>
               <ul
@@ -136,7 +173,7 @@ const Navbar = () => {
               >
                 <p className="text-sm text-center text-emerald-900">
                   Welcome,
-                  <br /> {user.displayName}
+                  <br /> {user.displayName || "User"}
                 </p>
                 <div className="divider my-0"></div>
                 <li>
