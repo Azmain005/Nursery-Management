@@ -21,6 +21,7 @@ const NurseryCart = () => {
   const { user } = useContext(AuthContext);
   const { cartItems, removeFromCart, updateQuantity } = useNurseryCart();
   const [quantities, setQuantities] = useState({});
+  const [maxQuantities, setMaxQuantities] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [localCartItems, setLocalCartItems] = useState([]);
   const navigate = useNavigate();
@@ -35,11 +36,15 @@ const NurseryCart = () => {
           .filter((item) => item.workerId === user.uid); // Filter by workerId instead of userId
         setLocalCartItems(items);
 
+        // Initialize quantities to 1 and store max values separately
         const initQuantities = {};
+        const maxQtys = {};
         items.forEach((item) => {
-          initQuantities[item.id] = item.quantity || 1; // Default quantity to 1 if not present
+          initQuantities[item.id] = item.quantity || 1; // Use existing cart quantity
+          maxQtys[item.id] = item.maxQuantity || item.quantity || 1; // First try maxQuantity, then fallback
         });
         setQuantities(initQuantities);
+        setMaxQuantities(maxQtys);
       } catch (error) {
         console.error("Error fetching cart items:", error);
       } finally {
@@ -53,11 +58,47 @@ const NurseryCart = () => {
   }, [user]);
 
   const handleQtyChange = async (id, delta) => {
-    const newQty = Math.max(1, (quantities[id] || 1) + delta);
-    setQuantities((q) => ({
-      ...q,
+    const maxQty = maxQuantities[id] || 1;
+    const newQty = Math.min(maxQty, Math.max(1, (quantities[id] || 1) + delta));
+    
+    setQuantities(prev => ({
+      ...prev,
       [id]: newQty,
     }));
+    
+    try {
+      const itemRef = doc(db, "nursery_cart", id);
+      await updateDoc(itemRef, { quantity: newQty });
+      
+      // Update local state
+      setLocalCartItems(prevItems => 
+        prevItems.map(item => 
+          item.id === id ? { ...item, quantity: newQty } : item
+        )
+      );
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      alert("Failed to update quantity. Please try again.");
+    }
+  };
+
+  const handleQtyInputChange = (id, value) => {
+    // Parse input value to number, default to 1 if NaN
+    let numValue = parseInt(value, 10);
+    if (isNaN(numValue)) numValue = 1;
+    
+    // Ensure value is within valid range (1 to max)
+    const maxQty = maxQuantities[id] || 1;
+    numValue = Math.min(maxQty, Math.max(1, numValue));
+    
+    setQuantities(prev => ({
+      ...prev,
+      [id]: numValue,
+    }));
+  };
+
+  const handleQtyInputBlur = async (id) => {
+    const newQty = quantities[id] || 1;
     
     try {
       const itemRef = doc(db, "nursery_cart", id);
@@ -90,7 +131,10 @@ const NurseryCart = () => {
   };
 
   const calculateTotal = () => {
-    return localCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return localCartItems.reduce((sum, item) => {
+      const qty = quantities[item.id] || 1;
+      return sum + item.price * qty;
+    }, 0);
   };
 
   const handleConfirmOrder = async () => {
@@ -105,16 +149,26 @@ const NurseryCart = () => {
         }
         
         const currentStock = matSnap.data()?.quantity ?? 0;
-        if (currentStock < cartItem.quantity) {
+        const selectedQuantity = quantities[cartItem.id] || 1;
+        
+        if (currentStock < selectedQuantity) {
           throw new Error(
             `Not enough stock for "${cartItem.name}". Only ${currentStock} left.`
           );
         }
       }
       
-      // Store cart items in session storage for checkout
-      // DO NOT update quantities here - will be done in checkout on order confirmation
-      sessionStorage.setItem('nurseryCartItems', JSON.stringify(localCartItems));
+      // Create a new array with updated quantities for checkout
+      const checkoutItems = localCartItems.map(item => {
+        // Create a new object to avoid modifying the original item
+        return {
+          ...item,
+          quantity: quantities[item.id] || 1 // Use the selected quantity (defaulting to 1)
+        };
+      });
+      
+      // Store MODIFIED cart items in session storage for checkout
+      sessionStorage.setItem('nurseryCartItems', JSON.stringify(checkoutItems));
       
       // Navigate to checkout
       navigate("/nurserycheckout");
@@ -181,27 +235,33 @@ const NurseryCart = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleQtyChange(item.id, -1)}
-                            className="px-2 py-1 bg-gray-200 rounded"
+                            className="w-8 h-8 rounded-full flex items-center justify-center bg-[#607b64] text-white hover:bg-[#4a5e4a]"
                           >
                             –
                           </button>
                           <input
-                            type="text"
-                            value={quantities[item.id] || item.quantity}
-                            readOnly
-                            className="w-12 text-center border rounded"
+                            type="number"
+                            min="1"
+                            max={maxQuantities[item.id] || 1}
+                            value={quantities[item.id] || 1}
+                            onChange={(e) => handleQtyInputChange(item.id, e.target.value)}
+                            onBlur={() => handleQtyInputBlur(item.id)}
+                            className="w-16 text-center border-2 border-[#607b64] rounded bg-[#faf6e9] p-1 focus:outline-none focus:border-[#3e5931]"
                           />
                           <button
-                            onClick={() => handleQtyChange(item.id, +1)}
-                            className="px-2 py-1 bg-gray-200 rounded"
+                            onClick={() => handleQtyChange(item.id, 1)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center bg-[#607b64] text-white hover:bg-[#4a5e4a]"
                           >
                             +
                           </button>
                         </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Available: {maxQuantities[item.id] || 1}
+                        </div>
                       </td>
-                      <td className="p-2 text-[#2c5c2c]">৳{item.price}</td>
-                      <td className="p-2 text-[#2c5c2c]">
-                        ৳{item.price * item.quantity}
+                      <td className="p-2 text-[#2c5c2c] font-bold">৳{item.price}</td>
+                      <td className="p-2 text-[#2c5c2c] font-bold">
+                        ৳{item.price * (quantities[item.id] || 1)}
                       </td>
                       <td className="p-2 text-[#2c5c2c]">{item.supplierName || "Unknown Supplier"}</td>
                       <td className="p-2 text-center">

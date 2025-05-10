@@ -44,6 +44,7 @@ export function NurseryCartProvider({ children }) {
       price: material.price,
       image: material.image,
       quantity: 1,
+      maxQuantity: material.quantity,
       description: material.description || "",
       addedAt: new Date().toISOString(),
     });

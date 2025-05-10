@@ -228,9 +228,9 @@ const PendingOrder = () => {
       // Create a new document in supplier_confirmed_orders
       await addDoc(collection(db, "supplier_confirmed_orders"), {
         materialInfo: {
-          name: order.name,
-          price: order.price,
-          quantity: order.quantity,
+        name: order.name,
+        price: order.price,
+        quantity: order.quantity,
           image: order.image || "",
           materialId: order.itemId || ""
         },
@@ -336,27 +336,27 @@ const PendingOrder = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex gap-3 mb-5">
-          <div className="flex gap-3 flex-1 border justify-between items-center h-[55px] bg-[#faf6e9] rounded-xl text-[#2c5c2c] px-4">
-            <p className="text-xl font-semibold">Orders</p>
-            <div className="flex items-center gap-2">
-              {showSearchInput && (
-                <input
-                  type="text"
-                  className="outline-none rounded-lg h-[40px] p-3 bg-[#faf6e9] border border-gray-300 transition-all w-60"
+      {/* Search Bar */}
+      <div className="flex gap-3 mb-5">
+        <div className="flex gap-3 flex-1 border justify-between items-center h-[55px] bg-[#faf6e9] rounded-xl text-[#2c5c2c] px-4">
+          <p className="text-xl font-semibold">Orders</p>
+          <div className="flex items-center gap-2">
+            {showSearchInput && (
+              <input
+                type="text"
+                className="outline-none rounded-lg h-[40px] p-3 bg-[#faf6e9] border border-gray-300 transition-all w-60"
                   placeholder="Search by worker or material..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              )}
-              <IoIosSearch
-                className="text-3xl font-bold cursor-pointer"
-                onClick={handleSearchClick}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
+            )}
+            <IoIosSearch
+              className="text-3xl font-bold cursor-pointer"
+              onClick={handleSearchClick}
+            />
           </div>
         </div>
+      </div>
 
         {/* Pending Orders List */}
         <div>
@@ -400,7 +400,7 @@ const PendingOrder = () => {
                           {order.image && (
                             <img
                               src={order.image}
-                              alt={order.name}
+                  alt={order.name}
                               className="w-12 h-12 rounded-full mr-2 object-cover"
                             />
                           )}
@@ -419,22 +419,22 @@ const PendingOrder = () => {
                   </div>
 
                   <div className="p-4 flex justify-between">
-                    <button
+                  <button
                       onClick={() => handleCancelOrder(order)}
                       className="px-4 py-2 rounded-md flex items-center font-medium"
                       style={{ backgroundColor: "#f8d7da", color: "#721c24" }}
-                    >
+                  >
                       <X size={18} className="mr-1" />
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleConfirmOrder(order)}
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleConfirmOrder(order)}
                       className="px-4 py-2 rounded-md flex items-center font-medium text-white"
                       style={{ backgroundColor: colors.primary }}
-                    >
+                  >
                       <Check size={18} className="mr-1" />
-                      Confirm
-                    </button>
+                    Confirm
+                  </button>
                   </div>
                 </div>
               ))

@@ -92,20 +92,21 @@ const Maintenance = () => {
         return;
       }
       
-      // Add to cart with the quantity from the material object passed to this function
+      // Add to cart with quantity set to 1 instead of the full material quantity
       await addDoc(collection(db, "nursery_cart"), {
         workerId: user.uid, // Unique to each worker
         materialId: material.id,
         name: material.name,
         price: material.price,
-        quantity: material.quantity, // Use the original quantity from the card
+        quantity: 1, // Set initial quantity to 1 instead of material.quantity
+        maxQuantity: material.quantity, // Store the max available quantity for reference
         description: material.description || "",
         image: material.image || "https://via.placeholder.com/150",
         addedAt: new Date().toISOString(),
         supplierId: material.supplierId,
         supplierName: supplierNames[material.supplierId] || "Unknown Supplier",
       });
-      alert(`${material.name} added to cart successfully with quantity of ${material.quantity}!`);
+      alert(`${material.name} added to cart successfully!`);
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("Failed to add to cart. Please try again.");

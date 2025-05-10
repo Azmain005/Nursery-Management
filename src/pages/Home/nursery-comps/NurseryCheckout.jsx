@@ -155,12 +155,12 @@ const NurseryCheckout = () => {
               Worker Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name*" className="input w-full" required />
-              <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name*" className="input w-full" required />
-              <input name="address" value={form.address} onChange={handleChange} placeholder="Address*" className="input w-full md:col-span-2" required />
-              <input name="mobile" value={form.mobile} onChange={handleChange} placeholder="Telephone*" className="input w-full" required />
-              <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="E-Mail*" className="input w-full" required />
-              <textarea name="comment" value={form.comment} onChange={handleChange} placeholder="Comment" className="textarea w-full md:col-span-2" />
+              <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name*" className="input w-full border border-[#607b64]" required />
+              <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name*" className="input w-full border border-[#607b64]" required />
+              <input name="address" value={form.address} onChange={handleChange} placeholder="Address*" className="input w-full md:col-span-2 border border-[#607b64]" required />
+              <input name="mobile" value={form.mobile} onChange={handleChange} placeholder="Telephone*" className="input w-full border border-[#607b64]" required />
+              <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="E-Mail*" className="input w-full border border-[#607b64]" required />
+              <textarea name="comment" value={form.comment} onChange={handleChange} placeholder="Comment" className="textarea w-full md:col-span-2 border border-[#607b64]" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
@@ -172,7 +172,7 @@ const NurseryCheckout = () => {
               <thead>
                 <tr className="border-b">
                   <th className="p-2 text-left">Product Name</th>
-                  <th className="p-2 text-left">Price × Qty</th>
+                  <th className="p-2 text-left">Price × Quantity</th>
                   <th className="p-2 text-left">Total</th>
                 </tr>
               </thead>
