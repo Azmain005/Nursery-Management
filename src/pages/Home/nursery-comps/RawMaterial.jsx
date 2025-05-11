@@ -1,17 +1,17 @@
-import { 
-  collection, 
-  getDocs, 
-  query, 
-  doc, 
-  updateDoc, 
-  deleteDoc
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
+import { FaTrash } from "react-icons/fa";
+import { IoIosSearch } from "react-icons/io";
 import { db } from "../../../Auth/firebase.init";
 import LoaderPlant from "../../../components/Loader/LoaderPlant";
-import { IoIosSearch } from "react-icons/io";
-import { FaTrash } from "react-icons/fa";
-import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
 
 const RawMaterial = () => {
   const [materials, setMaterials] = useState([]);
@@ -37,9 +37,9 @@ const RawMaterial = () => {
       // Fetch materials directly from supplier_confirmed_orders
       const ordersQuery = query(collection(db, "supplier_confirmed_orders"));
       const ordersSnapshot = await getDocs(ordersQuery);
-      const confirmedOrders = ordersSnapshot.docs.map(doc => ({
+      const confirmedOrders = ordersSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Store original materials for reference
@@ -111,7 +111,7 @@ const RawMaterial = () => {
   };
 
   const handleQuantityChange = (materialId, change) => {
-    setUpdateQuantity(prev => {
+    setUpdateQuantity((prev) => {
       const currentQuantity = prev[materialId] || 0;
       // Ensure quantity doesn't go below 0
       const newQuantity = Math.max(0, currentQuantity + change);
@@ -121,7 +121,7 @@ const RawMaterial = () => {
 
   const handleUpdateQuantity = async (material, originalQuantity) => {
     if (processing) return;
-    
+
     setProcessing(true);
     try {
       const newQuantity = updateQuantity[material.id] || 0;
@@ -213,7 +213,7 @@ const RawMaterial = () => {
         setFilteredMaterials(prev => 
           prev.map(m => m.id === material.id ? updatedMaterial : m)
         );
-        
+
         alert("Quantity updated successfully");
       } else {
         alert("No changes made");
@@ -225,7 +225,7 @@ const RawMaterial = () => {
       setProcessing(false);
     }
   };
-  
+
   const openDiscardModal = (materialId) => {
     setMaterialToDiscard(materialId);
     setShowConfirmModal(true);
@@ -233,7 +233,7 @@ const RawMaterial = () => {
 
   const handleDiscard = async () => {
     if (processing || !materialToDiscard) return;
-    
+
     setProcessing(true);
     try {
       // Find the material with all its original IDs
@@ -331,14 +331,16 @@ const RawMaterial = () => {
                 const supplierInfo = material.supplierInfo || {};
                 const workerInfo = material.workerInfo || {};
                 const originalQuantity = materialInfo.quantity || 0;
-                
+
                 return (
                   <div
                     key={material.id}
                     className="border p-4 rounded-lg shadow-md bg-[#faf6e9] flex flex-col"
                   >
                     <img
-                      src={materialInfo.image || "https://via.placeholder.com/150"}
+                      src={
+                        materialInfo.image || "https://via.placeholder.com/150"
+                      }
                       alt={materialInfo.name}
                       className="w-full h-40 object-cover rounded-lg mb-3"
                     />
@@ -364,14 +366,18 @@ const RawMaterial = () => {
                         </p>
                       )}
                     </div>
-                    
+
                     {/* Quantity controls */}
                     <div className="mt-3 pt-3 border-t border-gray-200">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium">Update Quantity:</span>
+                        <span className="text-sm font-medium">
+                          Update Quantity:
+                        </span>
                         <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => handleQuantityChange(material.id, -1)}
+                          <button
+                            onClick={() =>
+                              handleQuantityChange(material.id, -1)
+                            }
                             disabled={updateQuantity[material.id] <= 0}
                             className="w-8 h-8 rounded-full flex items-center justify-center bg-red-200 text-red-700 disabled:opacity-50"
                           >
@@ -380,8 +386,9 @@ const RawMaterial = () => {
                           <span className="w-8 text-center">
                             {updateQuantity[material.id] || 0}
                           </span>
-                          <button 
+                          <button
                             onClick={() => handleQuantityChange(material.id, 1)}
+                            disabled={updateQuantity[material.id] >= originalQuantity}
                             className="w-8 h-8 rounded-full flex items-center justify-center bg-green-200 text-green-700 disabled:opacity-50"
                           >
                             <AiOutlinePlus size={14} />
@@ -426,19 +433,21 @@ const RawMaterial = () => {
                 Prev
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-4 py-2 rounded-md ${
-                    page === currentPage
-                      ? "bg-[#607b64] text-white"
-                      : "bg-gray-300 hover:bg-gray-400"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-4 py-2 rounded-md ${
+                      page === currentPage
+                        ? "bg-[#607b64] text-white"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
 
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -455,7 +464,7 @@ const RawMaterial = () => {
       {/* Custom Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full">
+          <div className="bg-[#fefaef] rounded-lg p-6 shadow-xl max-w-sm w-full">
             <p className="text-black text-lg font-bold mb-6 text-center">
               Are you want to discard this material?
             </p>

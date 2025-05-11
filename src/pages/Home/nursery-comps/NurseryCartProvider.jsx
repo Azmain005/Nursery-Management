@@ -1,6 +1,3 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { db } from "../../../Auth/firebase.init";
-import { AuthContext } from "../../../providers/AuthProvider";
 import {
   addDoc,
   collection,
@@ -10,9 +7,11 @@ import {
   runTransaction,
   updateDoc,
   where,
-  deleteDoc,
   writeBatch,
 } from "firebase/firestore";
+import { createContext, useContext, useEffect, useState } from "react";
+import { db } from "../../../Auth/firebase.init";
+import { AuthContext } from "../../../providers/AuthProvider";
 
 const NurseryCartContext = createContext();
 export const useNurseryCart = () => useContext(NurseryCartContext);
@@ -57,7 +56,9 @@ export function NurseryCartProvider({ children }) {
       await runTransaction(db, async (tx) => {
         // Restore stock in Material_for_sell
         const matSnap = await tx.get(matRef);
-        const currentStock = matSnap.exists() ? matSnap.data().quantity || 0 : 0;
+        const currentStock = matSnap.exists()
+          ? matSnap.data().quantity || 0
+          : 0;
         tx.update(matRef, {
           quantity: currentStock + cartItem.quantity,
         });
@@ -82,18 +83,18 @@ export function NurseryCartProvider({ children }) {
   // Clear all items from the cart
   const clearCart = async () => {
     if (!user || !cartItems.length) return;
-    
+
     try {
       const batch = writeBatch(db);
-      
+
       // Delete each cart item
-      cartItems.forEach(item => {
+      cartItems.forEach((item) => {
         const cartRef = doc(db, "nursery_cart", item.id);
         batch.delete(cartRef);
       });
-      
+
       await batch.commit();
-      
+
       // Clear local state
       setCartItems([]);
     } catch (error) {
@@ -104,9 +105,15 @@ export function NurseryCartProvider({ children }) {
 
   return (
     <NurseryCartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart }}
+      value={{
+        cartItems,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+      }}
     >
       {children}
     </NurseryCartContext.Provider>
   );
-} 
+}

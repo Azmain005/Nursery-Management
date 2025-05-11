@@ -1,14 +1,14 @@
-import { useEffect, useState, useContext } from "react";
-import { IoIosSearch, IoIosAdd } from "react-icons/io";
 import {
+  addDoc,
   collection,
+  doc,
   getDocs,
   query,
-  where,
   updateDoc,
-  doc,
-  addDoc,
+  where,
 } from "firebase/firestore";
+import { useContext, useEffect, useState } from "react";
+import { IoIosAdd, IoIosSearch } from "react-icons/io";
 import { db } from "../../../Auth/firebase.init";
 import LoaderPlant from "../../../components/Loader/LoaderPlant";
 import { AuthContext } from "../../../providers/AuthProvider";

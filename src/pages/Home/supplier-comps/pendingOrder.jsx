@@ -1,21 +1,20 @@
-import { useState, useEffect, useContext } from "react";
-import { IoIosSearch } from "react-icons/io";
 import {
-  collection,
-  getDocs,
-  doc,
-  deleteDoc,
   addDoc,
-  query,
-  where,
+  collection,
+  doc,
   getDoc,
-  writeBatch,
+  getDocs,
+  query,
   serverTimestamp,
+  where,
+  writeBatch
 } from "firebase/firestore";
+import { Check, DollarSign, MapPin, Package, User, X } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
+import { IoIosSearch } from "react-icons/io";
 import { db } from "../../../Auth/firebase.init";
 import Loader from "../../../components/Loader/Loader";
 import { AuthContext } from "../../../providers/AuthProvider";
-import { Check, DollarSign, MapPin, Package, User, X } from "lucide-react";
 
 const PendingOrder = () => {
   const { user } = useContext(AuthContext);
