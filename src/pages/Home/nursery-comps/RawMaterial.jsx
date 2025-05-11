@@ -24,6 +24,7 @@ const RawMaterial = () => {
   const [processing, setProcessing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [materialToDiscard, setMaterialToDiscard] = useState(null);
+  const [originalMaterials, setOriginalMaterials] = useState([]); // Store original materials for reference
   const materialsPerPage = 6;
 
   useEffect(() => {
@@ -41,15 +42,48 @@ const RawMaterial = () => {
         ...doc.data()
       }));
 
+      // Store original materials for reference
+      setOriginalMaterials(confirmedOrders);
+
+      // Group materials with same name, price, supplier and worker
+      const groupedMaterials = {};
+      
+      confirmedOrders.forEach(order => {
+        const materialInfo = order.materialInfo || {};
+        const supplierInfo = order.supplierInfo || {};
+        const workerInfo = order.workerInfo || {};
+        
+        // Create a unique key based on material properties
+        const key = `${materialInfo.name}_${materialInfo.price}_${supplierInfo.supplierName}_${workerInfo.workerName}`;
+        
+        if (!groupedMaterials[key]) {
+          // First occurrence of this material combination
+          groupedMaterials[key] = {
+            ...order,
+            originalIds: [order.id], // Track original IDs
+            materialInfo: {
+              ...materialInfo,
+              quantity: materialInfo.quantity || 0
+            }
+          };
+        } else {
+          // Add quantity and track original ID
+          groupedMaterials[key].materialInfo.quantity += (materialInfo.quantity || 0);
+          groupedMaterials[key].originalIds.push(order.id);
+        }
+      });
+
+      const combinedMaterials = Object.values(groupedMaterials);
+
       // Initialize quantity state for each material
       const initialQuantityState = {};
-      confirmedOrders.forEach(order => {
-        initialQuantityState[order.id] = order.materialInfo?.quantity || 0;
+      combinedMaterials.forEach(material => {
+        initialQuantityState[material.id] = material.materialInfo?.quantity || 0;
       });
       setUpdateQuantity(initialQuantityState);
 
-      setMaterials(confirmedOrders);
-      setFilteredMaterials(confirmedOrders);
+      setMaterials(combinedMaterials);
+      setFilteredMaterials(combinedMaterials);
     } catch (error) {
       console.error("Error fetching materials:", error);
       alert("Failed to load materials. Please try again.");
@@ -85,55 +119,99 @@ const RawMaterial = () => {
     });
   };
 
-  const handleUpdateQuantity = async (materialId, originalQuantity) => {
+  const handleUpdateQuantity = async (material, originalQuantity) => {
     if (processing) return;
     
     setProcessing(true);
     try {
-      const newQuantity = updateQuantity[materialId] || 0;
+      const newQuantity = updateQuantity[material.id] || 0;
+      const quantityDifference = newQuantity - originalQuantity;
       
       if (newQuantity === 0) {
-        // If quantity is 0, discard the material
-        await deleteDoc(doc(db, "supplier_confirmed_orders", materialId));
+        // Delete all associated original materials
+        for (const originalId of material.originalIds) {
+          await deleteDoc(doc(db, "supplier_confirmed_orders", originalId));
+        }
         
         // Update state
-        setMaterials(prev => prev.filter(material => material.id !== materialId));
-        setFilteredMaterials(prev => prev.filter(material => material.id !== materialId));
+        setMaterials(prev => prev.filter(m => m.id !== material.id));
+        setFilteredMaterials(prev => prev.filter(m => m.id !== material.id));
+        setOriginalMaterials(prev => prev.filter(m => !material.originalIds.includes(m.id)));
         
         alert("Material removed successfully");
       } else if (newQuantity !== originalQuantity) {
-        // Update quantity in supplier_confirmed_orders
-        const materialRef = doc(db, "supplier_confirmed_orders", materialId);
-        await updateDoc(materialRef, { 
-          "materialInfo.quantity": newQuantity 
-        });
+        // We need to distribute the quantity change among the original materials
+        if (quantityDifference < 0) {
+          // Reducing quantity - remove from materials in order
+          let remainingToReduce = Math.abs(quantityDifference);
+          const updatedOriginals = [...originalMaterials];
+          
+          // Sort original materials by ID to ensure consistent processing
+          const relevantMaterials = updatedOriginals
+            .filter(m => material.originalIds.includes(m.id))
+            .sort((a, b) => a.id.localeCompare(b.id));
+            
+          for (const origMaterial of relevantMaterials) {
+            if (remainingToReduce <= 0) break;
+            
+            const currentQuantity = origMaterial.materialInfo?.quantity || 0;
+            
+            if (currentQuantity <= remainingToReduce) {
+              // Delete this document completely
+              await deleteDoc(doc(db, "supplier_confirmed_orders", origMaterial.id));
+              remainingToReduce -= currentQuantity;
+              
+              // Update originals
+              const index = updatedOriginals.findIndex(m => m.id === origMaterial.id);
+              if (index !== -1) {
+                updatedOriginals.splice(index, 1);
+              }
+            } else {
+              // Reduce this document's quantity
+              const newOriginalQuantity = currentQuantity - remainingToReduce;
+              await updateDoc(doc(db, "supplier_confirmed_orders", origMaterial.id), {
+                "materialInfo.quantity": newOriginalQuantity
+              });
+              
+              // Update originals
+              const index = updatedOriginals.findIndex(m => m.id === origMaterial.id);
+              if (index !== -1) {
+                updatedOriginals[index] = {
+                  ...updatedOriginals[index],
+                  materialInfo: {
+                    ...updatedOriginals[index].materialInfo,
+                    quantity: newOriginalQuantity
+                  }
+                };
+              }
+              
+              remainingToReduce = 0;
+            }
+          }
+          
+          setOriginalMaterials(updatedOriginals);
+        } else {
+          // Increasing quantity - not supported in this version
+          // This would require creating new material entries
+          alert("Increasing quantity is not supported in this version");
+          setProcessing(false);
+          return;
+        }
         
-        // Update state
+        // Update the UI state with the new grouped material
+        const updatedMaterial = {
+          ...material,
+          materialInfo: {
+            ...material.materialInfo,
+            quantity: newQuantity
+          }
+        };
+        
         setMaterials(prev => 
-          prev.map(material => 
-            material.id === materialId 
-              ? { 
-                  ...material, 
-                  materialInfo: { 
-                    ...material.materialInfo, 
-                    quantity: newQuantity 
-                  } 
-                } 
-              : material
-          )
+          prev.map(m => m.id === material.id ? updatedMaterial : m)
         );
         setFilteredMaterials(prev => 
-          prev.map(material => 
-            material.id === materialId 
-              ? { 
-                  ...material, 
-                  materialInfo: { 
-                    ...material.materialInfo, 
-                    quantity: newQuantity 
-                  } 
-                } 
-              : material
-          )
+          prev.map(m => m.id === material.id ? updatedMaterial : m)
         );
         
         alert("Quantity updated successfully");
@@ -158,11 +236,30 @@ const RawMaterial = () => {
     
     setProcessing(true);
     try {
-      // Delete directly from supplier_confirmed_orders
-      const materialRef = doc(db, "supplier_confirmed_orders", materialToDiscard);
-      await deleteDoc(materialRef);
+      // Find the material with all its original IDs
+      const materialToRemove = materials.find(m => m.id === materialToDiscard);
       
-      // Update state
+      if (materialToRemove && materialToRemove.originalIds) {
+        // Delete all associated original materials
+        for (const originalId of materialToRemove.originalIds) {
+          await deleteDoc(doc(db, "supplier_confirmed_orders", originalId));
+        }
+        
+        // Update original materials state
+        setOriginalMaterials(prev => 
+          prev.filter(m => !materialToRemove.originalIds.includes(m.id))
+        );
+      } else {
+        // Fallback to single delete
+        await deleteDoc(doc(db, "supplier_confirmed_orders", materialToDiscard));
+        
+        // Update original materials state
+        setOriginalMaterials(prev => 
+          prev.filter(m => m.id !== materialToDiscard)
+        );
+      }
+      
+      // Update UI state
       setMaterials(prev => prev.filter(material => material.id !== materialToDiscard));
       setFilteredMaterials(prev => prev.filter(material => material.id !== materialToDiscard));
       
@@ -261,6 +358,11 @@ const RawMaterial = () => {
                       <p className="text-sm text-gray-600">
                         Worker: {workerInfo.workerName || "Unknown Worker"}
                       </p>
+                      {material.originalIds && material.originalIds.length > 1 && (
+                        <p className="text-xs text-gray-500">
+                          Combined from {material.originalIds.length} orders
+                        </p>
+                      )}
                     </div>
                     
                     {/* Quantity controls */}
@@ -280,7 +382,6 @@ const RawMaterial = () => {
                           </span>
                           <button 
                             onClick={() => handleQuantityChange(material.id, 1)}
-                            disabled={updateQuantity[material.id] >= originalQuantity}
                             className="w-8 h-8 rounded-full flex items-center justify-center bg-green-200 text-green-700 disabled:opacity-50"
                           >
                             <AiOutlinePlus size={14} />
@@ -289,7 +390,7 @@ const RawMaterial = () => {
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleUpdateQuantity(material.id, originalQuantity)}
+                          onClick={() => handleUpdateQuantity(material, originalQuantity)}
                           disabled={processing || updateQuantity[material.id] === originalQuantity}
                           className="flex-1 py-2 rounded bg-[#607b64] text-white font-medium text-sm disabled:opacity-50"
                         >
