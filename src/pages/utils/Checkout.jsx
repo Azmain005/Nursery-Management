@@ -15,18 +15,8 @@ const Checkout = () => {
 
   // form state for customer fields
   const [form, setForm] = useState({
-    // firstName: "",
-    // lastName: "",
-    // address: "",
-    // mobile: "",
-    // email: "",
-    // city: "",
-    // zone: "Dhaka City",
-    // comment: "",
-    // payment: "cod",
+
     delivery: "home",
-    // voucher: "",
-    // coupon: "",
     agree: false,
   });
 
@@ -127,7 +117,17 @@ const Checkout = () => {
               <tbody>
                 {cartItems.map((i) => (
                   <tr key={i.id}>
-                    <td className="p-2">{i.name}</td>
+                    <td className="p-2 flex items-center">
+                      {i.image && (
+                        <img
+                          src={i.image}
+                          alt={i.name}
+                          className="w-10 h-10 rounded-full mr-2 object-cover"
+                        />
+                      )}
+                      {i.name}
+                    </td>
+                    {/* <td className="p-2">{i.name}</td> */}
                     <td className="p-2">
                       ${i.price} × {i.quantity}
                     </td>
