@@ -15,18 +15,8 @@ const Checkout = () => {
 
   // form state for customer fields
   const [form, setForm] = useState({
-    // firstName: "",
-    // lastName: "",
-    // address: "",
-    // mobile: "",
-    // email: "",
-    // city: "",
-    // zone: "Dhaka City",
-    // comment: "",
-    // payment: "cod",
+
     delivery: "home",
-    // voucher: "",
-    // coupon: "",
     agree: false,
   });
 

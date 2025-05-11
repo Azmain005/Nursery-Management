@@ -127,11 +127,11 @@ const MarketPlace = () => {
             });
 
             // Calculate total amount for the order
-            
+            const deliveryCharge = orderData.deliveryCharge || 0;
             const totalAmount = products.reduce(
               (sum, product) => sum + product.price * product.quantity,
               0
-            );
+            ) + deliveryCharge;
 
             return {
               id: orderDoc.id,
@@ -143,6 +143,8 @@ const MarketPlace = () => {
               totalAmount: totalAmount,
               status: "pending",
               timestamp: orderData.timestamp || null,
+              deliveryCharge: deliveryCharge,
+              deliveryOption: orderData.deliveryOption,
             };
           } catch (err) {
             console.error(`Error processing order ${orderDoc.id}:`, err);
@@ -605,6 +607,16 @@ const MarketPlace = () => {
                               </span>
                             </li>
                           ))}
+                          {/* Add Delivery Charge display here */}
+                          <li className="flex justify-between text-sm">
+                            <span className="opacity-80">
+                              Delivery Charger
+                              {order.deliveryOption === 'home' && ' (Home)'}
+                              {order.deliveryOption === 'express' && ' (Express)'}
+                              {order.deliveryOption === 'store' && ' (Store Pickup)'}
+                            </span>
+                            <span>${formatCurrency(order.deliveryCharge)}</span>
+                          </li>
                         </ul>
                         <div className="mt-3 pt-2 border-t flex justify-between font-bold">
                           <span>Total</span>
