@@ -127,7 +127,7 @@ const Navbar = () => {
                       {cartItems.length} Item{cartItems.length !== 1 ? "s" : ""}
                     </span>
                     <span className="text-info text-white">
-                      Subtotal: ৳ {cartTotal}
+                      Subtotal: $ {cartTotal}
                     </span>
 
                     <div className="card-actions">

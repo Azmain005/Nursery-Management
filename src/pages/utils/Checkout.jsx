@@ -91,9 +91,9 @@ const Checkout = () => {
                 onChange={handleChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
-                <option value="home">Home Delivery (৳60)</option>
+                <option value="home">Home Delivery ($60)</option>
                 <option value="store">Pick up from Store (Free)</option>
-                <option value="express">Express Delivery (৳150)</option>
+                <option value="express">Express Delivery ($150)</option>
               </select>
             </div>
           </div>
