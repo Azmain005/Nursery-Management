@@ -127,6 +127,7 @@ const MarketPlace = () => {
             });
 
             // Calculate total amount for the order
+            
             const totalAmount = products.reduce(
               (sum, product) => sum + product.price * product.quantity,
               0

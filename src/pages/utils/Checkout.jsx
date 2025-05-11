@@ -15,18 +15,18 @@ const Checkout = () => {
 
   // form state for customer fields
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    address: "",
-    mobile: "",
-    email: "",
-    city: "",
-    zone: "Dhaka City",
-    comment: "",
-    payment: "cod",
+    // firstName: "",
+    // lastName: "",
+    // address: "",
+    // mobile: "",
+    // email: "",
+    // city: "",
+    // zone: "Dhaka City",
+    // comment: "",
+    // payment: "cod",
     delivery: "home",
-    voucher: "",
-    coupon: "",
+    // voucher: "",
+    // coupon: "",
     agree: false,
   });
 
@@ -49,6 +49,8 @@ const Checkout = () => {
     try {
       const orderData = {
         userId: user.uid,
+        deliveryOption: form.delivery,
+        deliveryCharge: deliveryCharge,
         items: cartItems.map((i) => ({
           plantId: i.plantId,
           image: i.image,
@@ -56,7 +58,9 @@ const Checkout = () => {
           quantity: i.quantity,
           unitPrice: i.price,
           totalPrice: i.price * i.quantity,
-        })),
+          
+      })),
+      totalAmount: total,
       };
 
       // write to Firestore
@@ -78,11 +82,37 @@ const Checkout = () => {
       <main className="flex-1 p-6">
         <h1 className="text-2xl font-semibold text-[#2c5c2c] mb-6">Checkout</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Delivery Options */}
+          <div className="bg-[#fefaef] rounded-lg shadow p-6">
+            <h2 className="flex items-center text-lg font-bold text-[#607b64] mb-4">
+              <span className="inline-flex items-center justify-center w-6 h-6 mr-2 bg-[#02542d] text-white rounded-full">
+                
+              </span>
+              Delivery Options
+            </h2>
+            <div>
+              <label htmlFor="delivery" className="block text-gray-700 text-sm font-bold mb-2">
+                Select Delivery Option:
+              </label>
+              <select
+                id="delivery"
+                name="delivery"
+                value={form.delivery}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                <option value="home">Home Delivery (৳60)</option>
+                <option value="store">Pick up from Store (Free)</option>
+                <option value="express">Express Delivery (৳150)</option>
+              </select>
+            </div>
+          </div>
+
           {/* Order Overview */}
           <div className="bg-[#fefaef] rounded-lg shadow p-6">
             <h2 className="flex items-center text-lg font-bold text-[#607b64] mb-4">
               <span className="inline-flex items-center justify-center w-6 h-6 mr-2 bg-[#02542d] text-white rounded-full">
-                4
+                
               </span>
               Order Overview
             </h2>
