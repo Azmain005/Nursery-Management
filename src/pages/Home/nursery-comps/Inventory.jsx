@@ -29,7 +29,6 @@ const Inventory = () => {
     const fetchPlants = async () => {
       setIsLoading(true);
       try {
-        // const querySnapshot = await getDocs(collection(db, "inventory"));
         const querySnapshot = await getPlantsFromInventory();
         const plantsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -83,17 +82,14 @@ const Inventory = () => {
 
     try {
       setIsDeletingPlant(true);
-      // await deleteDoc(doc(db, "inventory", selectedPlant.id));
       await removeFromInventory(selectedPlant.id);
 
-      // Update local state after successful deletion
       const updatedPlants = plants.filter(
         (plant) => plant.id !== selectedPlant.id
       );
       setPlants(updatedPlants);
       setFilteredPlants(updatedPlants);
 
-      // Show notification
       setNotification({
         show: true,
         message: `${
@@ -102,10 +98,8 @@ const Inventory = () => {
         type: "success",
       });
 
-      // Close modal
       setSelectedPlant(null);
 
-      // Hide notification after 3 seconds
       setTimeout(() => {
         setNotification({ show: false, message: "", type: "" });
       }, 3000);
@@ -126,25 +120,24 @@ const Inventory = () => {
   };
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 p-2 md:p-0">
       {/* Header */}
       <div className="flex gap-3 rounded-xl mb-5">
         <div className="flex gap-3 flex-1 border justify-between items-center h-[55px] bg-[#faf6e9] rounded-xl text-[#2c5c2c] px-4">
-          <p className="text-xl font-semibold">PLANTy</p>
+          <p className="text-lg md:text-xl font-semibold">PLANTy</p>
           <div className="flex items-center gap-2">
             {showInput && (
               <input
                 type="text"
-                className="outline-none rounded-lg h-[40px] p-3 bg-[#faf6e9] border border-gray-300 transition-all w-60"
-                placeholder="Enter plant name..."
+                className="outline-none rounded-lg h-[40px] p-3 bg-[#faf6e9] border border-gray-300 transition-all w-40 md:w-60"
+                placeholder="Search plants..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             )}
-            <IoIosSearch
-              className="text-3xl font-bold cursor-pointer"
-              onClick={handleSearchClick}
-            />
+            <button onClick={handleSearchClick} className="p-1">
+              <IoIosSearch className="text-2xl md:text-3xl font-bold" />
+            </button>
           </div>
         </div>
       </div>
@@ -152,7 +145,7 @@ const Inventory = () => {
       {/* Notification */}
       {notification.show && (
         <div
-          className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+          className={`fixed top-4 right-4 p-3 md:p-4 rounded-lg shadow-lg z-50 text-sm md:text-base ${
             notification.type === "success" ? "bg-green-500" : "bg-red-500"
           } text-white`}
         >
@@ -165,8 +158,40 @@ const Inventory = () => {
         <Loader />
       ) : (
         <>
-          {/* Table */}
-          <div className="overflow-x-auto rounded-lg shadow-sm">
+          {/* Table - Mobile Cards */}
+          <div className="block md:hidden">
+            {currentPlants.length > 0 ? (
+              currentPlants.map((plant) => (
+                <div
+                  key={plant.id}
+                  className="bg-[#faf6e9] p-4 rounded-lg shadow mb-3"
+                  onClick={() => setSelectedPlant(plant)}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-[#607b64]">
+                        {plant.name || plant.common_name || "Unknown"}
+                      </p>
+                      <p className="text-sm text-[#607b64]">
+                        Stock: {plant.stock || "N/A"}
+                      </p>
+                      <p className="text-sm text-[#607b64]">
+                        Category: {plant.categories || "N/A"}
+                      </p>
+                    </div>
+                    <IoIosArrowForward className="text-lg" />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center p-4 text-gray-500">
+                No plants found.
+              </div>
+            )}
+          </div>
+
+          {/* Table - Desktop */}
+          <div className="hidden md:block overflow-x-auto rounded-lg shadow-sm">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-[#faf6e9]">
                 <tr>
@@ -223,7 +248,7 @@ const Inventory = () => {
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-2 rounded-md bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+              className="px-3 py-2 rounded-md bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-sm md:text-base"
             >
               Prev
             </button>
@@ -234,7 +259,7 @@ const Inventory = () => {
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-3 py-2 md:px-4 rounded-md text-sm md:text-base ${
                     page === currentPage
                       ? "bg-[#607b64] text-white"
                       : "bg-gray-300 hover:bg-gray-400"
@@ -247,7 +272,7 @@ const Inventory = () => {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 rounded-md bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+              className="px-3 py-2 rounded-md bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-sm md:text-base"
             >
               Next
             </button>
@@ -257,8 +282,8 @@ const Inventory = () => {
 
       {/* Modal */}
       {selectedPlant && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-[#faf6e9] p-6 rounded-lg w-[90%] md:w-[700px] flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-2 md:p-0">
+          <div className="bg-[#faf6e9] p-4 md:p-6 rounded-lg w-full max-w-md md:w-[700px] max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <div className="flex justify-end">
               <button
@@ -270,46 +295,48 @@ const Inventory = () => {
             </div>
 
             {/* Modal Main Content */}
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <div className="flex flex-col items-center gap-6">
               {/* Image */}
               <img
                 src={selectedPlant.image || "https://via.placeholder.com/150"}
                 alt={selectedPlant.name}
-                className="w-[300px] h-[300px] object-cover rounded-lg shadow-md"
+                className="w-full max-w-[300px] h-auto aspect-square object-cover rounded-lg shadow-md"
               />
 
               {/* Details */}
-              <div className="flex-1">
-                <h2 className="text-4xl font-bold text-[#2c5c2c] mb-2">
+              <div className="w-full">
+                <h2 className="text-2xl md:text-4xl font-bold text-[#2c5c2c] mb-2">
                   {selectedPlant.name || "Unknown"}
                 </h2>
-                <p className="text-xl italic text-gray-600 mb-4">
+                <p className="text-lg md:text-xl italic text-gray-600 mb-4">
                   {selectedPlant.sci_name || "Unknown"}
                 </p>
 
-                <p className="text-md mb-2 text-[#2c5c2c]">
-                  <strong>Planted:</strong>{" "}
-                  {selectedPlant.planting_date || "Unknown"}
-                </p>
-                <p className="text-md mb-2 text-[#2c5c2c]">
-                  <strong>Category:</strong>{" "}
-                  {selectedPlant.categories || "Unknown"}
-                </p>
-                <p className="text-md mb-2 text-[#2c5c2c]">
-                  <strong>In Stock:</strong> {selectedPlant.stock || 0}
-                </p>
-                <p className="text-md mb-2 text-[#2c5c2c]">
-                  <strong>Price:</strong> {selectedPlant.price || 0}
-                </p>
-                <p className="text-md mb-2 text-[#2c5c2c]">
-                  <strong>Stage:</strong> {selectedPlant.stage || 0}
-                </p>
+                <div className="grid grid-cols-1 gap-2">
+                  <p className="text-md text-[#2c5c2c]">
+                    <strong>Planted:</strong>{" "}
+                    {selectedPlant.planting_date || "Unknown"}
+                  </p>
+                  <p className="text-md text-[#2c5c2c]">
+                    <strong>Category:</strong>{" "}
+                    {selectedPlant.categories || "Unknown"}
+                  </p>
+                  <p className="text-md text-[#2c5c2c]">
+                    <strong>In Stock:</strong> {selectedPlant.stock || 0}
+                  </p>
+                  <p className="text-md text-[#2c5c2c]">
+                    <strong>Price:</strong> {selectedPlant.price || 0}
+                  </p>
+                  <p className="text-md text-[#2c5c2c]">
+                    <strong>Stage:</strong> {selectedPlant.stage || 0}
+                  </p>
+                </div>
 
                 {/* Remove from Inventory Button */}
                 <button
                   onClick={handleRemove}
                   disabled={isDeletingPlant}
-                  className="bg-[#607b64] hover:bg-[#4a6450] text-white font-semibold w-full py-3 rounded-lg text-lg transition disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="mt-6 bg-[#607b64] hover:bg-[#4a6450] text-white font-semibold w-full py-3 rounded-lg text-base md:text-lg transition disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isDeletingPlant ? (
                     <div className="flex items-center justify-center">
