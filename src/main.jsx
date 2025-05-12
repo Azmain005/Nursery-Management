@@ -17,18 +17,18 @@ import Worker from "./pages/Home/Worker";
 import Root from "./pages/root/Root";
 import Cart from "./pages/utils/Cart";
 import Checkout from "./pages/utils/Checkout";
-import Profile from "./pages/utils/profile";
-import Settings from "./pages/utils/settings";
+import Profile from "./pages/utils/Profile";
+import Settings from "./pages/utils/Settings";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
 import AuthProvider from "./providers/AuthProvider";
 
 import AddMaterial from "./pages/Home/supplier-comps/AddMaterial";
-import PendingOrder from "./pages/Home/supplier-comps/pendingOrder";
+import PendingOrder from "./pages/Home/supplier-comps/PendingOrder";
 
 import NurseryCart from "./pages/Home/nursery-comps/NurseryCart";
-import { CartProvider } from "./providers/CartProvider";
-import NurseryCheckout from "./pages/Home/nursery-comps/NurseryCheckout";
 import { NurseryCartProvider } from "./pages/Home/nursery-comps/NurseryCartProvider";
+import NurseryCheckout from "./pages/Home/nursery-comps/NurseryCheckout";
+import { CartProvider } from "./providers/CartProvider";
 
 const router = createBrowserRouter([
   {
