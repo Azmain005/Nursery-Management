@@ -55,12 +55,13 @@ const Login = () => {
   return (
     <section className="bg-[#fefaef]">
       <div className="grid grid-cols-1 lg:grid-cols-2">
+        {/* Form Section */}
         <div className="flex items-center justify-center px-4 py-10 bg-[#fefaef] sm:px-6 lg:px-8 sm:py-16 lg:py-24">
-          <div className="xl:w-full xl:max-w-sm 2xl:max-w-md xl:mx-auto">
-            <h2 className="text-3xl font-bold leading-tight text-[#02542d] sm:text-4xl">
+          <div className="w-full max-w-md mx-auto md:max-w-lg lg:max-w-md xl:max-w-lg">
+            <h2 className="text-2xl font-bold leading-tight text-[#02542d] sm:text-3xl md:text-4xl">
               Sign in to Explore PLANTy
             </h2>
-            <p className="mt-2 text-base text-gray-600">
+            <p className="mt-2 text-sm md:text-base text-gray-600">
               Don't have an account?{" "}
               <NavLink
                 to="/register"
@@ -70,23 +71,23 @@ const Login = () => {
               </NavLink>
             </p>
 
-            <form onSubmit={handleLogin} className="mt-8">
-              <div className="space-y-5">
+            <form onSubmit={handleLogin} className="mt-6 md:mt-8">
+              <div className="space-y-4 md:space-y-5">
                 <div>
                   <label
                     htmlFor="email"
-                    className="text-base font-medium text-gray-900"
+                    className="text-sm font-medium text-gray-900 md:text-base"
                   >
                     {" "}
                     Email address{" "}
                   </label>
-                  <div className="mt-2.5">
+                  <div className="mt-1 md:mt-2.5">
                     <input
                       type="email"
                       name="email"
                       id="email"
                       placeholder="Enter email to get started"
-                      className="block w-full p-4 text-black placeholder-gray-500 transition-all duration-200 border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:border-[#02542d] focus:bg-white caret-[#02542d]"
+                      className="block w-full p-3 text-black placeholder-gray-500 transition-all duration-200 border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:border-[#02542d] focus:bg-white caret-[#02542d] md:p-4"
                     />
                   </div>
                 </div>
@@ -95,7 +96,7 @@ const Login = () => {
                   <div className="flex items-center justify-between">
                     <label
                       htmlFor="password"
-                      className="text-base font-medium text-gray-900"
+                      className="text-sm font-medium text-gray-900 md:text-base"
                     >
                       {" "}
                       Password{" "}
@@ -104,24 +105,24 @@ const Login = () => {
                     <a
                       href="#"
                       title=""
-                      className="text-sm font-medium text-[#3a5a40] hover:underline hover:text-[#02542d] focus:text-[#02542d]"
+                      className="text-xs font-medium text-[#3a5a40] hover:underline hover:text-[#02542d] focus:text-[#02542d] md:text-sm"
                     >
                       {" "}
                       Forgot password?{" "}
                     </a>
                   </div>
-                  <div className="mt-2.5 mb-2.5 relative">
+                  <div className="mt-1 mb-2 relative md:mt-2.5">
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
                       id="password"
                       placeholder="Enter your password"
-                      className="block w-full p-4 text-black placeholder-gray-500 transition-all duration-200 border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:border-[#02542d] focus:bg-white caret-[#02542d]"
+                      className="block w-full p-3 text-black placeholder-gray-500 transition-all duration-200 border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:border-[#02542d] focus:bg-white caret-[#02542d] md:p-4"
                     />
                     <button
                       type="button"
                       onClick={togglePasswordVisibility}
-                      className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-600"
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600 md:px-4"
                     >
                       {showPassword ? (
                         <svg
@@ -171,7 +172,7 @@ const Login = () => {
                 <div>
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center w-full px-4 py-4 text-base font-semibold text-white transition-all duration-200 bg-[#3a5a40] border border-transparent rounded-md focus:outline-none hover:bg-[#02542d] focus:bg-[#02542d]"
+                    className="inline-flex items-center justify-center w-full px-4 py-3 text-sm font-semibold text-white transition-all duration-200 bg-[#3a5a40] border border-transparent rounded-md focus:outline-none hover:bg-[#02542d] focus:bg-[#02542d] md:text-base md:py-4"
                   >
                     Log in
                   </button>
@@ -183,11 +184,11 @@ const Login = () => {
               <button
                 onClick={handleSigninwithGoogle}
                 type="button"
-                className="relative inline-flex items-center justify-center w-full px-4 py-4 text-base font-semibold text-[#02542d]] transition-all duration-200 bg-white border-2 border-gray-200 rounded-md hover:bg-gray-100 focus:bg-gray-100 hover:text-black focus:text-black focus:outline-none"
+                className="relative inline-flex items-center justify-center w-full px-4 py-3 text-sm font-semibold text-[#02542d] transition-all duration-200 bg-white border-2 border-gray-200 rounded-md hover:bg-gray-100 focus:bg-gray-100 hover:text-black focus:text-black focus:outline-none md:text-base md:py-4"
               >
-                <div className="absolute inset-y-0 left-0 p-4">
+                <div className="absolute inset-y-0 left-0 p-3 md:p-4">
                   <svg
-                    className="w-6 h-6 text-[#02542d]"
+                    className="w-5 h-5 text-[#02542d] md:w-6 md:h-6"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="currentColor"
@@ -201,9 +202,10 @@ const Login = () => {
           </div>
         </div>
 
+        {/* Image Section */}
         <div className="flex items-center justify-center px-4 py-10 sm:py-16 lg:py-24 bg-[#fefaef] sm:px-6 lg:px-8">
           <div>
-            <img className="w-[400px] mx-auto" src={leaf} alt="" />
+            <img className="w-full max-w-xs mx-auto md:max-w-sm lg:max-w-md" src={leaf} alt="" />
           </div>
         </div>
       </div>
