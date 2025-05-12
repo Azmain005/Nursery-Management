@@ -610,7 +610,7 @@ const MarketPlace = () => {
                           {/* Add Delivery Charge display here */}
                           <li className="flex justify-between text-sm">
                             <span className="opacity-80">
-                              Delivery Charger
+                              Delivery Charge
                               {order.deliveryOption === 'home' && ' (Home)'}
                               {order.deliveryOption === 'express' && ' (Express)'}
                               {order.deliveryOption === 'store' && ' (Store Pickup)'}
