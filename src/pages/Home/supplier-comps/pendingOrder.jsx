@@ -50,6 +50,7 @@ const PendingOrder = () => {
         if (ordersSnapshot.empty) {
           setOrders([]);
           setTotalOrderValue(0);
+          
           setIsLoading(false);
           return;
         }
